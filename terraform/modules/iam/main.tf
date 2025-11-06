@@ -16,7 +16,9 @@ resource "aws_iam_role" "ecs_task_execution" {
   })
 
   tags = {
+    Name        = "${var.environment}-seer-ecs-task-execution-role"
     Environment = var.environment
+    Project     = "Seer"
   }
 }
 
@@ -44,7 +46,9 @@ resource "aws_iam_role" "ecs_task" {
   })
 
   tags = {
+    Name        = "${var.environment}-seer-ecs-task-role"
     Environment = var.environment
+    Project     = "Seer"
   }
 }
 
@@ -86,7 +90,7 @@ resource "aws_iam_role_policy" "ecs_task_ssm" {
           "ssm:GetParametersByPath"
         ]
         Resource = [
-          "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.environment}/seer/*"
+          "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/seer/${var.environment}/*"
         ]
       }
     ]

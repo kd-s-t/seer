@@ -214,7 +214,7 @@ resource "aws_ecs_task_definition" "expressjs" {
       secrets = [
         {
           name      = "OPENAI_API_KEY"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/seer/openai_api_key"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/seer/${var.environment}/openai_api_key"
         }
       ]
 
@@ -356,13 +356,14 @@ data "aws_caller_identity" "current" {}
 
 # SSM Parameter for OpenAI API Key
 resource "aws_ssm_parameter" "openai_api_key" {
-  name        = "/${var.environment}/seer/openai_api_key"
+  name        = "/seer/${var.environment}/openai_api_key"
   description = "OpenAI API key for Seer"
   type        = "SecureString"
   value       = var.openai_api_key
 
   tags = {
     Environment = var.environment
+    Project     = "Seer"
   }
 }
 

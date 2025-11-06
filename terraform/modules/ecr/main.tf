@@ -8,7 +8,9 @@ resource "aws_ecr_repository" "expressjs" {
   }
 
   tags = {
+    Name        = "${var.environment}-seer-expressjs"
     Environment = var.environment
+    Project     = "Seer"
     Service     = "expressjs"
   }
 }
@@ -23,7 +25,9 @@ resource "aws_ecr_repository" "nextjs" {
   }
 
   tags = {
+    Name        = "${var.environment}-seer-nextjs"
     Environment = var.environment
+    Project     = "Seer"
     Service     = "nextjs"
   }
 }

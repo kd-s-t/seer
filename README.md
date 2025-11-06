@@ -32,9 +32,7 @@ Use cases for Seer include event prediction markets, news-based trading, sports 
 	<img src="https://img.shields.io/badge/Material--UI-007FFF?style=for-the-badge&logo=mui&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/Framer%20Motion-EF008F?style=for-the-badge&logo=framer&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" /> 
-	<img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/OpenAI-74aa9c?style=for-the-badge&logo=openai&logoColor=white" /> 
-	<img src="https://img.shields.io/badge/MetaMask-FF7139?style=for-the-badge&logo=metamask&logoColor=white" /> 
 </div>
 
 <div align="center"> 
@@ -43,6 +41,8 @@ Use cases for Seer include event prediction markets, news-based trading, sports 
 	<img src="https://img.shields.io/badge/Hardhat-FFF100?style=for-the-badge&logo=hardhat&logoColor=black" /> 
 	<img src="https://img.shields.io/badge/ethers.js-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/Web3-3C3C3D?style=for-the-badge&logo=web3dotjs&logoColor=white" />
+	<img src="https://img.shields.io/badge/wagmi-6366f1?style=for-the-badge&logo=ethereum&logoColor=white" />
+	<img src="https://img.shields.io/badge/MetaMask-FF7139?style=for-the-badge&logo=metamask&logoColor=white" /> 
 </div>
 
 <div align="center"> 
@@ -73,12 +73,6 @@ seer/
     └── package.json
 ```
 
-## Project Overview
-
-**Seer** is a decentralized prediction market platform that leverages AI intelligence with blockchain technology to create, manage, and resolve prediction markets faster than traditional oracle-based systems.
-
-## Hackathon Alignment
-
 This project addresses several YZi Labs Preferred Project opportunities:
 
 1. **AI-Assisted Oracles**: Faster resolution than UMA's 24-48h optimistic oracle
@@ -90,7 +84,7 @@ This project addresses several YZi Labs Preferred Project opportunities:
 
 ### Prerequisites
 
-- Node.js 16+ and npm
+- Node.js 22+ (LTS) and npm
 - MetaMask browser extension
 - BNB Chain testnet BNB (for testing)
 - OpenAI API key (for AI features)
@@ -103,31 +97,21 @@ git clone https://github.com/kd-s-t/seer.git
 cd seer
 ```
 
-**2. Install dependencies for each service:**
-
-```bash
-# Backend
-cd expressjs && npm install && cd ..
-
-# Frontend
-cd nextjs && npm install && cd ..
-
-# Smart Contracts
-cd bnb && npm install && cd ..
-```
-
-**3. Set up and start services:**
+**2. Set up and start services:**
 
 - **Backend**: See [expressjs/README.md](expressjs/README.md) for detailed setup instructions
 - **Frontend**: See [nextjs/README.md](nextjs/README.md) for detailed setup instructions
 - **Smart Contracts**: See [bnb/README.md](bnb/README.md) for deployment instructions
 
-**Quick start:**
-1. Deploy smart contract (see `bnb/README.md`)
-2. Configure backend environment variables (see `expressjs/README.md`)
-3. Start backend: `cd expressjs && npm run dev`
-4. Configure frontend environment variables (see `nextjs/README.md`)
-5. Start frontend: `cd nextjs && npm run dev`
+## Docker
+
+Run the entire stack with Docker:
+
+```bash
+docker-compose up
+```
+
+This starts both frontend and backend services.
 
 ## Usage
 
@@ -160,53 +144,6 @@ Markets can be resolved:
 - **AI-Assisted**: Use AI to suggest the winning outcome
 - **Automatically**: After end time (if configured)
 
-## API Endpoints
-
-See [expressjs/README.md](expressjs/README.md) for complete API documentation.
-
-## Testing
-
-### Smart Contract Tests (Hardhat)
-
-```bash
-cd bnb
-npm test
-npm run test:coverage  # With coverage report
-npm run node           # Start local Hardhat node
-```
-
-**Contract tests cover:**
-- ✅ Market creation and validation
-- ✅ Betting functionality
-- ✅ Market resolution
-- ✅ Winner payouts and platform fees
-- ✅ Edge cases and security
-
-### Backend Tests
-
-```bash
-cd expressjs
-npm test
-```
-
-## Technical Stack
-
-- **Frontend**: Next.js 15, React 19, TypeScript, Material-UI v5, Framer Motion, ethers.js, MetaMask
-- **Backend**: Node.js, Express.js, OpenAI API
-- **Blockchain**: Solidity 0.8.20, Hardhat, ethers.js
-- **AI**: OpenAI GPT-3.5/GPT-4
-- **Storage**: Fully on-chain (BNB Chain smart contracts)
-- **Wallet**: MetaMask integration
-
-## Docker
-
-Run the entire stack with Docker:
-
-```bash
-docker-compose up
-```
-
-This starts both frontend and backend services.
 
 ## Revenue Model
 
