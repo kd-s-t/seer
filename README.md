@@ -10,7 +10,7 @@
 
 # Seer
 
-Seer is an AI-powered prediction market platform on BNB Chain that uses AI to create markets from news and resolve them faster than traditional oracles. Unlike UMA's 24-48h optimistic oracle, our AI-assisted resolution provides near-instant results while maintaining accuracy through evidence-based analysis.
+**Seer** is a decentralized prediction platform on BNB Chain that uses AI to create markets from news and resolve them faster than traditional oracles. Unlike UMA's 24-48h optimistic oracle, our AI-assisted resolution provides near-instant results while maintaining accuracy through evidence-based analysis. The platform automatically generates tradeable markets from current events, allows users to bet on outcomes, and uses AI to suggest resolutions based on verifiable facts. All bets and payouts are settled on-chain with a 2% platform fee. The modern web interface makes prediction markets accessible to non-technical users, addressing the UX gap in current DeFi prediction markets. Revenue is generated through platform fees, creating a sustainable business model.
 
 **Features:**
 - **BNB Chain**: Mainnet and testnet support for all transactions
@@ -28,7 +28,6 @@ Use cases for Seer include event prediction markets, news-based trading, sports 
 
 <div align="center"> 
 	<img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" /> 
-	<img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" /> 
 	<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/Material--UI-007FFF?style=for-the-badge&logo=mui&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/Framer%20Motion-EF008F?style=for-the-badge&logo=framer&logoColor=white" /> 
@@ -40,7 +39,6 @@ Use cases for Seer include event prediction markets, news-based trading, sports 
 
 <div align="center"> 
 	<img src="https://img.shields.io/badge/BNB_Chain-F3BA2F?style=for-the-badge&logo=binance&logoColor=black" />
-	<img src="https://img.shields.io/badge/Ethereum-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white" />
 	<img src="https://img.shields.io/badge/Solidity-363636?style=for-the-badge&logo=solidity&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/Hardhat-FFF100?style=for-the-badge&logo=hardhat&logoColor=black" /> 
 	<img src="https://img.shields.io/badge/ethers.js-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white" /> 
@@ -334,8 +332,3 @@ This is a hackathon project. Contributions welcome!
 - [@kenn](https://www.linkedin.com/in/kdst/)
 - [@don](https://www.linkedin.com/in/carl-john-don-sebial-882430187/)
 - [@peter](https://www.linkedin.com/in/petertibon/)
-
-## Social Media
-
-- **LinkedIn**: [SplitSafe Escrow](https://www.linkedin.com/company/splitsafe-escrow/?viewAsMember=true)
-- **Facebook**: [SplitSafe](https://www.facebook.com/profile.php?id=61581697425694)
