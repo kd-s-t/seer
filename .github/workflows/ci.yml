@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Test Express.js backend
+  test-expressjs:
+    name: Test Express.js
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: expressjs/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./expressjs
+        run: npm ci
+      
+      - name: Run tests
+        working-directory: ./expressjs
+        run: npm test
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'test-key' }}
+          NETWORK: testnet
+          BNB_TESTNET_RPC: https://data-seed-prebsc-1-s1.binance.org:8545
+
+  # Test Next.js frontend
+  test-nextjs:
+    name: Test Next.js
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: nextjs/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./nextjs
+        run: npm ci
+      
+      - name: Run linter
+        working-directory: ./nextjs
+        run: npm run lint
+      
+      - name: Build Next.js
+        working-directory: ./nextjs
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3016
+
+  # Test Smart Contracts
+  test-contracts:
+    name: Test Smart Contracts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: bnb/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./bnb
+        run: npm ci
+      
+      - name: Compile contracts
+        working-directory: ./bnb
+        run: npm run compile
+      
+      - name: Run tests
+        working-directory: ./bnb
+        run: npm test
+
+  # Build Docker images
+  build-docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Express.js image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./expressjs
+          push: false
+          tags: seer-expressjs:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build Next.js image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nextjs
+          push: false
+          tags: seer-nextjs:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+

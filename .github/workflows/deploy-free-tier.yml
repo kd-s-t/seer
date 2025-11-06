@@ -1,0 +1,91 @@
+name: Deploy to Free Tier EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment name'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+      terraform_action:
+        description: 'Terraform action'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+env:
+  AWS_REGION: us-east-1
+  TF_WORKING_DIR: terraform/free-tier
+
+jobs:
+  deploy:
+    name: Deploy Free Tier
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.6.0'
+          terraform_wrapper: false
+      
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+      
+      - name: Terraform Format
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check || terraform fmt
+      
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+      
+      - name: Terraform Plan
+        if: github.event.inputs.terraform_action == 'plan'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -no-color
+        env:
+          TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          TF_VAR_contract_address: ${{ secrets.CONTRACT_ADDRESS }}
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+      
+      - name: Terraform Apply
+        if: github.event.inputs.terraform_action == 'apply'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve
+        env:
+          TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          TF_VAR_contract_address: ${{ secrets.CONTRACT_ADDRESS }}
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+      
+      - name: Terraform Destroy
+        if: github.event.inputs.terraform_action == 'destroy'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform destroy -auto-approve
+        env:
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+      
+      - name: Output Terraform Outputs
+        if: github.event.inputs.terraform_action == 'apply'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform output -json
+
