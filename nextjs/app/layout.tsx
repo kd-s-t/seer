@@ -4,6 +4,11 @@ import Providers from './providers'
 export const metadata: Metadata = {
   title: 'Seer - AI Prediction Market',
   description: 'AI-powered prediction market platform on BNB Chain',
+  icons: {
+    icon: '/seericon.ico',
+    shortcut: '/seericon.ico',
+    apple: '/seericon.ico',
+  },
 }
 
 export default function RootLayout({

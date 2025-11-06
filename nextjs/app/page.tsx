@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ethers } from 'ethers'
+import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { parseEther } from 'viem'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Container,
@@ -14,26 +15,22 @@ import {
   Grid,
   Snackbar,
   Alert,
-  Chip,
   Stack,
 } from '@mui/material'
 import { AccountBalanceWallet, AutoAwesome } from '@mui/icons-material'
 import MarketCard from '@/components/MarketCard'
+import { CONTRACT_ABI } from '@/lib/contract'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3016'
 
-// Contract ABI
-const CONTRACT_ABI = [
-  "function createMarket(string question, string[] outcomes, uint256 durationHours) returns (uint256)",
-  "function placeBet(uint256 marketId, uint256 outcome) payable",
-  "function getMarket(uint256 marketId) view returns (address creator, string question, uint256 endTime, bool resolved, uint256 winningOutcome, uint256 totalPool)",
-  "function getMarketOutcomes(uint256 marketId) view returns (string[])",
-  "function getOutcomePool(uint256 marketId, uint256 outcome) view returns (uint256)",
-  "event MarketCreated(uint256 indexed marketId, address indexed creator, string question)"
-]
-
 export default function Home() {
-  const [userAddress, setUserAddress] = useState<string | null>(null)
+  const { address, isConnected } = useAccount()
+  const { connect, connectors, isPending: isConnecting } = useConnect()
+  const { writeContract, data: hash, isPending: isWriting } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  })
+
   const [markets, setMarkets] = useState<any[]>([])
   const [contractAddress, setContractAddress] = useState<string | null>(null)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -46,29 +43,6 @@ export default function Home() {
     outcomes: '',
     duration: 72
   })
-
-  // Check MetaMask
-  const checkMetaMask = () => {
-    if (typeof window === 'undefined' || typeof window.ethereum === 'undefined') {
-      showMessage('Please install MetaMask to use this app', 'error')
-      return false
-    }
-    return true
-  }
-
-  // Connect wallet
-  const connectWallet = async () => {
-    if (!checkMetaMask()) return
-
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-      setUserAddress(accounts[0])
-      showMessage('Wallet connected!', 'success')
-      loadMarkets()
-    } catch (error: any) {
-      showMessage('Failed to connect wallet: ' + error.message, 'error')
-    }
-  }
 
   // Get contract address
   useEffect(() => {
@@ -84,18 +58,6 @@ export default function Home() {
       }
     }
     fetchConfig()
-  }, [])
-
-  // Auto-connect if already connected
-  useEffect(() => {
-    if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
-      window.ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
-        if (accounts.length > 0) {
-          setUserAddress(accounts[0])
-          loadMarkets()
-        }
-      })
-    }
   }, [])
 
   // Show message
@@ -117,20 +79,49 @@ export default function Home() {
     }
   }
 
+  // Connect wallet handler
+  const handleConnect = () => {
+    const metaMaskConnector = connectors.find(c => c.id === 'metaMask')
+    if (metaMaskConnector) {
+      connect({ connector: metaMaskConnector })
+    } else {
+      showMessage('MetaMask not found. Please install MetaMask.', 'error')
+    }
+  }
+
+  // Show messages for transaction states
+  useEffect(() => {
+    if (isWriting) {
+      showMessage('Confirm transaction in MetaMask...', 'success')
+    }
+  }, [isWriting])
+
+  useEffect(() => {
+    if (hash) {
+      showMessage(`Transaction sent! Hash: ${hash}`, 'success')
+    }
+  }, [hash])
+
+  useEffect(() => {
+    if (isConfirming) {
+      showMessage('Waiting for confirmation...', 'success')
+    }
+  }, [isConfirming])
+
+  useEffect(() => {
+    if (isConfirmed) {
+      showMessage('Transaction confirmed successfully!', 'success')
+      loadMarkets()
+      setMarketForm({ question: '', outcomes: '', duration: 72 })
+    }
+  }, [isConfirmed])
+
   // Create market
   const createMarket = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!userAddress) {
+    if (!isConnected) {
       showMessage('Please connect your wallet first', 'error')
-      return
-    }
-
-    if (!checkMetaMask()) return
-
-    const outcomes = marketForm.outcomes.split(',').map(s => s.trim())
-    if (outcomes.length < 2) {
-      showMessage('At least 2 outcomes are required', 'error')
       return
     }
 
@@ -139,58 +130,34 @@ export default function Home() {
       return
     }
 
+    const outcomes = marketForm.outcomes.split(',').map(s => s.trim())
+    if (outcomes.length < 2) {
+      showMessage('At least 2 outcomes are required', 'error')
+      return
+    }
+
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, signer)
-
-      showMessage('Confirm transaction in MetaMask...', 'success')
-
-      const tx = await contract.createMarket(marketForm.question, outcomes, marketForm.duration)
-      showMessage(`Transaction sent! Hash: ${tx.hash}`, 'success')
-      showMessage('Waiting for confirmation...', 'success')
-
-      const receipt = await tx.wait()
-      
-      if (receipt.status === 1) {
-        const event = receipt.logs.find((log: any) => {
-          try {
-            const parsed = contract.interface.parseLog(log)
-            return parsed && parsed.name === 'MarketCreated'
-          } catch {
-            return false
-          }
-        })
-        
-        let marketId = null
-        if (event) {
-          const parsed = contract.interface.parseLog(event)
-          marketId = parsed.args.marketId.toString()
-        }
-        
-        showMessage(`Market created successfully! ID: ${marketId || 'pending'}`, 'success')
-        setMarketForm({ question: '', outcomes: '', duration: 72 })
-        loadMarkets()
-      } else {
-        showMessage('Transaction failed', 'error')
-      }
+      writeContract({
+        address: contractAddress as `0x${string}`,
+        abi: CONTRACT_ABI,
+        functionName: 'createMarket',
+        args: [marketForm.question, outcomes, BigInt(marketForm.duration)],
+      })
     } catch (error: any) {
-      if (error.code === 4001) {
+      if (error.message?.includes('User rejected')) {
         showMessage('Transaction rejected by user', 'error')
       } else {
-        showMessage('Error: ' + error.message, 'error')
+        showMessage('Error: ' + (error.message || 'Unknown error'), 'error')
       }
     }
   }
 
   // Place bet
   const placeBet = async (marketId: number, outcome: number, amount: number) => {
-    if (!userAddress) {
+    if (!isConnected) {
       showMessage('Please connect your wallet first', 'error')
       return
     }
-
-    if (!checkMetaMask()) return
 
     if (!amount || amount < 0.001) {
       showMessage('Minimum bet is 0.001', 'error')
@@ -203,30 +170,19 @@ export default function Home() {
     }
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, signer)
-
-      const amountWei = ethers.parseEther(amount.toString())
-      showMessage('Confirm transaction in MetaMask...', 'success')
-
-      const tx = await contract.placeBet(marketId, outcome, { value: amountWei })
-      showMessage(`Transaction sent! Hash: ${tx.hash}`, 'success')
-      showMessage('Waiting for confirmation...', 'success')
-
-      const receipt = await tx.wait()
-      
-      if (receipt.status === 1) {
-        showMessage('Bet placed successfully!', 'success')
-        loadMarkets()
-      } else {
-        showMessage('Transaction failed', 'error')
-      }
+      const amountWei = parseEther(amount.toString())
+      writeContract({
+        address: contractAddress as `0x${string}`,
+        abi: CONTRACT_ABI,
+        functionName: 'placeBet',
+        args: [BigInt(marketId), BigInt(outcome)],
+        value: amountWei,
+      })
     } catch (error: any) {
-      if (error.code === 4001) {
+      if (error.message?.includes('User rejected')) {
         showMessage('Transaction rejected by user', 'error')
       } else {
-        showMessage('Error: ' + error.message, 'error')
+        showMessage('Error: ' + (error.message || 'Unknown error'), 'error')
       }
     }
   }
@@ -255,10 +211,16 @@ export default function Home() {
     }
   }
 
-  // Load markets on mount
+  // Load markets on mount and when connected
   useEffect(() => {
     loadMarkets()
   }, [])
+
+  useEffect(() => {
+    if (isConnected) {
+      loadMarkets()
+    }
+  }, [isConnected])
 
   return (
     <Box sx={{ minHeight: '100vh', py: 4 }}>
@@ -293,15 +255,16 @@ export default function Home() {
                     Wallet:
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    {userAddress ? `${userAddress.substring(0, 6)}...${userAddress.substring(38)}` : 'Not connected'}
+                    {address ? `${address.substring(0, 6)}...${address.substring(38)}` : 'Not connected'}
                   </Typography>
                 </Box>
                 <Button
                   variant="contained"
                   startIcon={<AccountBalanceWallet />}
-                  onClick={connectWallet}
+                  onClick={handleConnect}
+                  disabled={isConnected || isConnecting}
                 >
-                  Connect Wallet
+                  {isConnecting ? 'Connecting...' : isConnected ? 'Connected' : 'Connect Wallet'}
                 </Button>
               </Stack>
             </CardContent>
@@ -348,8 +311,12 @@ export default function Home() {
                   sx={{ mb: 2 }}
                 />
                 <Stack direction="row" spacing={2}>
-                  <Button type="submit" variant="contained">
-                    Create Market
+                  <Button 
+                    type="submit" 
+                    variant="contained"
+                    disabled={isWriting || isConfirming}
+                  >
+                    {isWriting || isConfirming ? 'Processing...' : 'Create Market'}
                   </Button>
                   <Button
                     type="button"
@@ -393,7 +360,7 @@ export default function Home() {
                   >
                     <MarketCard
                       market={market}
-                      userAddress={userAddress}
+                      userAddress={address || null}
                       onPlaceBet={placeBet}
                     />
                   </motion.div>

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   expressjs:
     build:
@@ -32,3 +30,21 @@ services:
       - /app/node_modules
       - /app/.next
 
+  bnb:
+    build:
+      context: ./bnb
+      dockerfile: Dockerfile
+    ports:
+      - "8545:8545"  # Hardhat node default port
+    environment:
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - BNB_TESTNET_RPC=${BNB_TESTNET_RPC}
+      - BNB_MAINNET_RPC=${BNB_MAINNET_RPC}
+    volumes:
+      - ./bnb:/app
+      - /app/node_modules
+      - /app/artifacts
+      - /app/cache
+    command: tail -f /dev/null  # Keep container running for manual commands
+    profiles:
+      - tools  # Only start when explicitly requested

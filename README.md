@@ -1,14 +1,14 @@
 <div align="center"> 
 	<a href="https://dorahacks.io" target="_blank">
-		<img src="./seediy.png" width="100%" /> 
+		<img src="./seedify.png" width="100%" /> 
 	</a>
 </div>
 
 <div align="center"> 
-	<img src="./seer logo.png" width="200px" alt="Seer Logo" />
+	<img src="./seerlogo.png" width="200px" alt="Seer Logo" />
 </div>
 
-# Seer
+---  
 
 **Seer** is a decentralized prediction platform on BNB Chain that uses AI to create markets from news and resolve them faster than traditional oracles. Unlike UMA's 24-48h optimistic oracle, our AI-assisted resolution provides near-instant results while maintaining accuracy through evidence-based analysis. The platform automatically generates tradeable markets from current events, allows users to bet on outcomes, and uses AI to suggest resolutions based on verifiable facts. All bets and payouts are settled on-chain with a 2% platform fee. The modern web interface makes prediction markets accessible to non-technical users, addressing the UX gap in current DeFi prediction markets. Revenue is generated through platform fees, creating a sustainable business model.
 
@@ -26,6 +26,8 @@
 
 Use cases for Seer include event prediction markets, news-based trading, sports betting, political predictions, crypto price predictions, and any scenario requiring fast, AI-assisted market resolution with on-chain settlement.
 
+---  
+
 <div align="center"> 
 	<img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /> 
@@ -39,9 +41,8 @@ Use cases for Seer include event prediction markets, news-based trading, sports 
 	<img src="https://img.shields.io/badge/BNB_Chain-F3BA2F?style=for-the-badge&logo=binance&logoColor=black" />
 	<img src="https://img.shields.io/badge/Solidity-363636?style=for-the-badge&logo=solidity&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/Hardhat-FFF100?style=for-the-badge&logo=hardhat&logoColor=black" /> 
-	<img src="https://img.shields.io/badge/ethers.js-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white" /> 
-	<img src="https://img.shields.io/badge/Web3-3C3C3D?style=for-the-badge&logo=web3dotjs&logoColor=white" />
 	<img src="https://img.shields.io/badge/wagmi-6366f1?style=for-the-badge&logo=ethereum&logoColor=white" />
+	<img src="https://img.shields.io/badge/ethers.js-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/MetaMask-FF7139?style=for-the-badge&logo=metamask&logoColor=white" /> 
 </div>
 
@@ -50,6 +51,8 @@ Use cases for Seer include event prediction markets, news-based trading, sports 
 	<img src="https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white" /> 
 	<img src="https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white" />
 </div>
+
+---  
 
 ## Project Structure
 
@@ -113,6 +116,8 @@ docker-compose up
 
 This starts both frontend and backend services.
 
+---  
+
 ## Usage
 
 ### Creating Markets
@@ -144,12 +149,13 @@ Markets can be resolved:
 - **AI-Assisted**: Use AI to suggest the winning outcome
 - **Automatically**: After end time (if configured)
 
-
 ## Revenue Model
 
 - **Platform Fee**: 2% of all winning bet payouts
 - **Market Creation**: Free (can add fees in future)
 - **AI Features**: Powered by OpenAI API (costs covered by platform fees)
+
+---  
 
 ## Submission Requirements
 
@@ -162,10 +168,6 @@ Markets can be resolved:
   - [x] Blockchain integration (BNB Chain smart contracts - fully on-chain)
 - [x] **Tests**: Basic test suite included
 - [x] **BNB Chain**: All contracts deployable to BNB Chain
-
-### Team Info (150 words)
-
-[Add your team information here]
 
 ## Future Enhancements
 
@@ -181,7 +183,7 @@ Markets can be resolved:
 
 ---
 
-## Authors
+## Team
 
 - [@kenn](https://www.linkedin.com/in/kdst/)
 - [@don](https://www.linkedin.com/in/carl-john-don-sebial-882430187/)

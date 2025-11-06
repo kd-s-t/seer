@@ -234,9 +234,16 @@ describe("PredictionMarket", function () {
 
       // User1 should be able to claim
       const initialBalance = await ethers.provider.getBalance(user1.address);
-      const tx = await predictionMarket.connect(user1).claimWinnings(marketId);
-      const receipt = await tx.wait();
-      const gasUsed = receipt.gasUsed * receipt.gasPrice;
+      const claimTx = await predictionMarket.connect(user1).claimWinnings(marketId);
+      const claimReceipt = await claimTx.wait();
+      const claimGasUsed = claimReceipt.gasUsed * claimReceipt.gasPrice;
+      
+      // Withdraw the claimed winnings
+      const withdrawTx = await predictionMarket.connect(user1).withdraw();
+      const withdrawReceipt = await withdrawTx.wait();
+      const withdrawGasUsed = withdrawReceipt.gasUsed * withdrawReceipt.gasPrice;
+      const totalGasUsed = claimGasUsed + withdrawGasUsed;
+      
       const finalBalance = await ethers.provider.getBalance(user1.address);
 
       // User1 should get their share minus platform fee (2%)
@@ -244,7 +251,7 @@ describe("PredictionMarket", function () {
       // Platform fee: 0.3 * 0.02 = 0.006 BNB
       // Payout: 0.3 - 0.006 = 0.294 BNB
       const expectedPayout = ethers.parseEther("0.294");
-      const balanceChange = finalBalance - initialBalance + gasUsed;
+      const balanceChange = finalBalance - initialBalance + totalGasUsed;
       
       // Allow small difference for gas
       expect(balanceChange).to.be.closeTo(expectedPayout, ethers.parseEther("0.001"));
