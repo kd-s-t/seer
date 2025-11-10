@@ -7,28 +7,24 @@ import { SnackbarState } from '@/types'
 import Header from '@/components/Header'
 import MetaMaskWarning from '@/components/MetaMaskWarning'
 import NotificationSnackbar from '@/components/NotificationSnackbar'
-import Homepage from '@/components/Homepage'
+import CryptoTable from '@/components/CryptoTable'
 
-export default function Home() {
-  // Custom hooks
-  const { address, isConnected, isConnecting, connectError, handleConnect, handleDisconnect, ensureTestnet } = useWallet()
+export default function MarketPage() {
+  const { address, isConnected, isConnecting, connectError, handleConnect, handleDisconnect } = useWallet()
   const { contractAddress, loading: contractLoading } = useContract()
   const { showWarning, setShowWarning } = useMetaMask()
   const { isTestnet, switchToTestnet } = useNetwork()
 
-  // Local state
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
     severity: 'success'
   })
 
-  // Show message helper
   const showMessage = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity })
   }
 
-  // Handle wallet connection
   const onConnect = () => {
     if (typeof window !== 'undefined' && !window.ethereum) {
       showMessage('MetaMask not found. Please install MetaMask extension.', 'error')
@@ -37,14 +33,12 @@ export default function Home() {
     handleConnect()
   }
 
-  // Auto-switch to testnet when connected
   useEffect(() => {
     if (isConnected && !isTestnet) {
       switchToTestnet()
     }
   }, [isConnected, isTestnet, switchToTestnet])
 
-  // Handle connection errors
   useEffect(() => {
     if (connectError) {
       const errorMessage = connectError.message || 'Failed to connect wallet'
@@ -57,7 +51,6 @@ export default function Home() {
       }
     }
   }, [connectError])
-
 
   return (
     <Box sx={{ minHeight: '100vh', py: 4 }}>
@@ -97,7 +90,7 @@ export default function Home() {
           </Box>
         )}
 
-        <Homepage />
+        <CryptoTable />
 
         <NotificationSnackbar
           snackbar={snackbar}
@@ -107,3 +100,4 @@ export default function Home() {
     </Box>
   )
 }
+

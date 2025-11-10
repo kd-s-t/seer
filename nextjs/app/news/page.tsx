@@ -1,34 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Box, Container, Typography } from '@mui/material'
-import { useContract, useMetaMask, useWallet, useNetwork } from '@/hooks'
-import { SnackbarState } from '@/types'
+import { Box, Container } from '@mui/material'
 import Header from '@/components/Header'
+import Homepage from '@/components/Homepage'
+import { useWallet, useMetaMask } from '@/hooks'
 import MetaMaskWarning from '@/components/MetaMaskWarning'
 import NotificationSnackbar from '@/components/NotificationSnackbar'
-import Homepage from '@/components/Homepage'
+import { useState, useEffect } from 'react'
+import { SnackbarState } from '@/types'
 
-export default function Home() {
-  // Custom hooks
-  const { address, isConnected, isConnecting, connectError, handleConnect, handleDisconnect, ensureTestnet } = useWallet()
-  const { contractAddress, loading: contractLoading } = useContract()
+export default function NewsPage() {
+  const { address, isConnected, isConnecting, connectError, handleConnect, handleDisconnect } = useWallet()
   const { showWarning, setShowWarning } = useMetaMask()
-  const { isTestnet, switchToTestnet } = useNetwork()
 
-  // Local state
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
     severity: 'success'
   })
 
-  // Show message helper
   const showMessage = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity })
   }
 
-  // Handle wallet connection
   const onConnect = () => {
     if (typeof window !== 'undefined' && !window.ethereum) {
       showMessage('MetaMask not found. Please install MetaMask extension.', 'error')
@@ -37,14 +31,6 @@ export default function Home() {
     handleConnect()
   }
 
-  // Auto-switch to testnet when connected
-  useEffect(() => {
-    if (isConnected && !isTestnet) {
-      switchToTestnet()
-    }
-  }, [isConnected, isTestnet, switchToTestnet])
-
-  // Handle connection errors
   useEffect(() => {
     if (connectError) {
       const errorMessage = connectError.message || 'Failed to connect wallet'
@@ -57,7 +43,6 @@ export default function Home() {
       }
     }
   }, [connectError])
-
 
   return (
     <Box sx={{ minHeight: '100vh', py: 4 }}>
@@ -75,28 +60,6 @@ export default function Home() {
           onDisconnect={handleDisconnect}
         />
 
-        {!contractLoading && !contractAddress && (
-          <Box sx={{ mb: 3, p: 2, bgcolor: 'warning.light', color: 'warning.contrastText', borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Backend Not Connected
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Cannot fetch contract address from backend. Make sure the backend is running.
-            </Typography>
-            <Typography variant="body2" component="pre" sx={{ bgcolor: 'rgba(0,0,0,0.2)', p: 1, borderRadius: 1, fontSize: '0.85rem', overflow: 'auto' }}>
-{`1. Start backend:
-   cd expressjs
-   npm start
-
-2. Ensure expressjs/.env has:
-   CONTRACT_ADDRESS=0x... (your deployed contract address)
-   PORT=3016
-
-3. Refresh this page`}
-            </Typography>
-          </Box>
-        )}
-
         <Homepage />
 
         <NotificationSnackbar
@@ -107,3 +70,4 @@ export default function Home() {
     </Box>
   )
 }
+

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppBar, Toolbar, Typography, Button, Chip, Stack, Alert, Box, ToggleButtonGroup, ToggleButton } from '@mui/material'
-import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp } from '@mui/icons-material'
+import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article } from '@mui/icons-material'
 import { useNetwork } from '@/hooks/useNetwork'
 import { useCurrency } from '@/contexts/CurrencyContext'
 
@@ -36,10 +36,11 @@ export default function Header({
   }
 
   const handleMarketClick = () => {
-    const marketSection = document.getElementById('market-section')
-    if (marketSection) {
-      marketSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    router.push('/market')
+  }
+
+  const handleNewsClick = () => {
+    router.push('/news')
   }
 
   const displayAddress = mounted && address 
@@ -61,10 +62,10 @@ export default function Header({
             component="div" 
             onClick={handleLogoClick}
             sx={{ 
-              flexGrow: 1, 
               fontWeight: 600,
               cursor: 'pointer',
               userSelect: 'none',
+              mr: 3,
               '&:hover': {
                 opacity: 0.8
               }
@@ -76,13 +77,25 @@ export default function Header({
           <Stack 
             direction="row" 
             spacing={1.5} 
-            alignItems="center" 
-            sx={{ 
-              mr: { xs: 0, sm: 2 },
-              flexWrap: { xs: 'wrap', sm: 'nowrap' },
-              justifyContent: { xs: 'flex-end', sm: 'flex-start' }
-            }}
+            alignItems="center"
+            sx={{ mr: 2 }}
           >
+            <Button
+              color="inherit"
+              variant="text"
+              size="small"
+              startIcon={<Article />}
+              onClick={handleNewsClick}
+              sx={{ 
+                minWidth: { xs: 80, sm: 100 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.1)'
+                }
+              }}
+            >
+              News
+            </Button>
             {mounted && isConnected && (
               <Button
                 color="inherit"
@@ -101,6 +114,20 @@ export default function Header({
                 Market
               </Button>
             )}
+          </Stack>
+          
+          <Box sx={{ flexGrow: 1 }} />
+          
+          <Stack 
+            direction="row" 
+            spacing={1.5} 
+            alignItems="center" 
+            sx={{ 
+              mr: { xs: 0, sm: 2 },
+              flexWrap: { xs: 'wrap', sm: 'nowrap' },
+              justifyContent: { xs: 'flex-end', sm: 'flex-start' }
+            }}
+          >
             {mounted && isConnected && (
               <ToggleButtonGroup
                 value={currency}

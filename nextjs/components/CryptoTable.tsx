@@ -329,7 +329,7 @@ export default function CryptoTable() {
     <Box sx={{ mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ color: 'white', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-        Crypto Prices & AI Predictions
+        Market
       </Typography>
       </Box>
 
@@ -487,22 +487,6 @@ export default function CryptoTable() {
             <TableRow>
               <TableCell 
                 sx={{ 
-                  display: { xs: 'none', sm: 'table-cell' },
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  '&:hover': { bgcolor: 'action.hover' }
-                }}
-                onClick={() => handleSort('symbol')}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <strong>Symbol</strong>
-                  {sortBy === 'symbol' && (
-                    sortDirection === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />
-                  )}
-                </Box>
-              </TableCell>
-              <TableCell 
-                sx={{ 
                   cursor: 'pointer',
                   userSelect: 'none',
                   '&:hover': { bgcolor: 'action.hover' }
@@ -538,7 +522,10 @@ export default function CryptoTable() {
                   display: { xs: 'none', md: 'table-cell' }
                 }}
               >
-                <strong>24h Change</strong>
+                <strong>Last 24hr</strong>
+              </TableCell>
+              <TableCell align="left">
+                <strong>Story</strong>
               </TableCell>
               <TableCell 
                 align="right"
@@ -550,7 +537,7 @@ export default function CryptoTable() {
                 onClick={() => handleSort('ai')}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                  <strong>AI Suggestion</strong>
+                  <strong>Prediction</strong>
                   {sortBy === 'ai' && (
                     sortDirection === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />
                   )}
@@ -573,14 +560,9 @@ export default function CryptoTable() {
             ) : (
               sortedCryptos.map((crypto) => (
               <TableRow key={crypto.id} hover>
-                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                  <Typography variant="body1" fontWeight="bold">
-                    {crypto.symbol}
-                  </Typography>
-                </TableCell>
                 <TableCell>
                   <Box>
-                    <Typography variant="body1" fontWeight="bold" sx={{ display: { xs: 'block', sm: 'none' } }}>
+                    <Typography variant="body1" fontWeight="bold">
                       {crypto.symbol}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -611,34 +593,26 @@ export default function CryptoTable() {
                     </Typography>
                   </Box>
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="left">
                   {(() => {
-                    const suggestionPercent = crypto.suggestionPercent
-                    if (crypto.suggestion && typeof suggestionPercent === 'number') {
+                    if (crypto.reasoning) {
                       return (
                         <Box>
-                          <Chip
-                            label={`${crypto.suggestion === 'up' ? '↑' : '↓'} ${formatPercent(suggestionPercent)}`}
-                        color={crypto.suggestion === 'up' ? 'success' : 'error'}
-                        size="small"
-                        sx={{ mb: 0.5 }}
-                      />
-                      {crypto.reasoning && (
-                        <Box>
-                        <Typography 
-                          variant="caption" 
-                          color="text.secondary" 
-                          display="block"
-                          sx={{ 
-                            maxWidth: { xs: 150, sm: 200 },
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              mb: 0.5
-                          }}
-                        >
-                          {crypto.reasoning}
-                        </Typography>
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary" 
+                            sx={{ 
+                              maxWidth: { xs: 150, sm: 250 },
+                              overflow: 'hidden',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              mb: 0.5,
+                              lineHeight: 1.4
+                            }}
+                          >
+                            {crypto.reasoning}
+                          </Typography>
                           <Button
                             size="small"
                             variant="text"
@@ -654,13 +628,30 @@ export default function CryptoTable() {
                             Show more
                           </Button>
                         </Box>
-                          )}
-                        </Box>
                       )
                     }
                     return (
                       <Typography variant="body2" color="text.secondary">
-                        {crypto.reasoning || 'No suggestion available'}
+                        No story available
+                      </Typography>
+                    )
+                  })()}
+                </TableCell>
+                <TableCell align="right">
+                  {(() => {
+                    const suggestionPercent = crypto.suggestionPercent
+                    if (crypto.suggestion && typeof suggestionPercent === 'number') {
+                      return (
+                        <Chip
+                          label={`${crypto.suggestion === 'up' ? '↑' : '↓'} ${formatPercent(suggestionPercent)}`}
+                          color={crypto.suggestion === 'up' ? 'success' : 'error'}
+                          size="small"
+                        />
+                      )
+                    }
+                    return (
+                      <Typography variant="body2" color="text.secondary">
+                        No prediction
                       </Typography>
                     )
                   })()}
@@ -703,7 +694,7 @@ export default function CryptoTable() {
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6">
-              AI Suggestion - {selectedReasoning?.crypto}
+              {selectedReasoning?.crypto}
             </Typography>
             <IconButton
               aria-label="close"

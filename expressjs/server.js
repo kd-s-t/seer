@@ -29,6 +29,7 @@ app.use('/api/markets', marketsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/crypto', cryptoRoutes);
+app.use('/api/market-prediction', cryptoRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/trading', tradingRoutes);

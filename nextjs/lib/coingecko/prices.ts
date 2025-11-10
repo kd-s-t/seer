@@ -19,7 +19,7 @@ export async function getCryptoPrices(symbols?: string[], tags?: string[], curre
       params.append('_refresh', '1')
     }
     const queryString = params.toString()
-    const url = `${API_URL}/api/crypto/prices${queryString ? `?${queryString}` : ''}`
+    const url = `${API_URL}/api/market-prediction/prices${queryString ? `?${queryString}` : ''}`
     
     if (forceRefresh) {
       console.log('Frontend: Force refresh - calling API:', url)
