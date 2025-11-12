@@ -3,24 +3,27 @@ services:
     build:
       context: ./expressjs
       dockerfile: Dockerfile
+    container_name: seery-backend
     ports:
       - "3016:3016"
+    env_file:
+      - ./expressjs/.env
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PORT=3016
       - NETWORK=${NETWORK:-testnet}
       - BNB_TESTNET_RPC=${BNB_TESTNET_RPC}
-      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
     volumes:
       - ./expressjs:/app
-    depends_on:
-      - nextjs
+      - /app/node_modules
+    command: npm start
+    restart: unless-stopped
 
   nextjs:
     build:
       context: ./nextjs
       dockerfile: Dockerfile
       target: deps
+    container_name: seery-frontend
     ports:
       - "3015:3015"
     environment:
@@ -32,6 +35,9 @@ services:
       - /app/node_modules
       - /app/.next
     command: sh -c "npm install && npm run dev"
+    restart: unless-stopped
+    depends_on:
+      - expressjs
 
   bnb:
     build:

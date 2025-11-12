@@ -1,31 +1,25 @@
 import { useState, useEffect } from 'react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3016'
-
 export function useContract() {
   const [contractAddress, setContractAddress] = useState<string | null>(null)
+  const [predictionStakingAddress, setPredictionStakingAddress] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/config`)
-        if (!response.ok) {
-          throw new Error(`Backend returned ${response.status}`)
-        }
-        const config = await response.json()
-        if (config.contractAddress) {
-          setContractAddress(config.contractAddress)
-        }
-      } catch (error) {
-        console.error('Error fetching config:', error)
-      } finally {
-        setLoading(false)
-      }
+    const address = process.env.NEXT_PUBLIC_PREDICTION_STAKING_ADDRESS || null
+    if (address) {
+      setPredictionStakingAddress(address)
+      console.log('Set predictionStakingAddress from env:', address)
+    } else {
+      console.warn('PREDICTION_STAKING_ADDRESS not set in environment variables')
     }
-    fetchConfig()
+    setLoading(false)
   }, [])
 
-  return { contractAddress, loading }
+  return { 
+    contractAddress, 
+    predictionStakingAddress,
+    loading 
+  }
 }
 

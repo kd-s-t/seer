@@ -151,7 +151,7 @@ async function testAPI() {
 
 // Run all tests
 async function runTests() {
-  console.log('🚀 Starting Tests for AI Prediction Market\n');
+  console.log('Starting Tests for A crypto forecast\n');
   console.log('='.repeat(50) + '\n');
   
   const results = {

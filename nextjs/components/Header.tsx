@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { AppBar, Toolbar, Typography, Button, Chip, Stack, Alert, Box, ToggleButtonGroup, ToggleButton } from '@mui/material'
-import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article } from '@mui/icons-material'
+import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance } from '@mui/icons-material'
 import { useNetwork } from '@/hooks/useNetwork'
 import { useCurrency } from '@/contexts/CurrencyContext'
 
@@ -23,9 +24,14 @@ export default function Header({
   onDisconnect,
 }: HeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const { networkName, isTestnet, isSwitching, switchToTestnet } = useNetwork()
   const { currency, setCurrency } = useCurrency()
   const [mounted, setMounted] = useState(false)
+  
+  const isNewsActive = pathname === '/news'
+  const isMarketActive = pathname === '/market'
+  const isStakingActive = pathname === '/staking'
 
   useEffect(() => {
     setMounted(true)
@@ -43,6 +49,10 @@ export default function Header({
     router.push('/news')
   }
 
+  const handleStakingClick = () => {
+    router.push('/staking')
+  }
+
   const displayAddress = mounted && address 
     ? `${address.substring(0, 6)}...${address.substring(38)}` 
     : 'Not connected'
@@ -57,22 +67,26 @@ export default function Header({
         }}
       >
         <Toolbar>
-          <Typography 
-            variant="h6" 
-            component="div" 
+          <Box
+            component="img"
+            src="/seerylogov2.png"
+            alt="Seery"
             onClick={handleLogoClick}
             sx={{ 
-              fontWeight: 600,
               cursor: 'pointer',
               userSelect: 'none',
               mr: 3,
+              height: 38,
+              width: 'auto',
+              objectFit: 'contain',
+              backgroundColor: 'transparent',
+              mixBlendMode: 'screen',
+              filter: 'brightness(1.1)',
               '&:hover': {
                 opacity: 0.8
               }
             }}
-          >
-            Seer
-          </Typography>
+          />
           
           <Stack 
             direction="row" 
@@ -82,37 +96,76 @@ export default function Header({
           >
             <Button
               color="inherit"
-              variant="text"
+              variant={isNewsActive ? "contained" : "text"}
               size="small"
               startIcon={<Article />}
               onClick={handleNewsClick}
               sx={{ 
                 minWidth: { xs: 80, sm: 100 },
                 fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)'
-                }
+                ...(isNewsActive ? {
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.3)'
+                  }
+                } : {
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.1)'
+                  }
+                })
               }}
             >
               News
             </Button>
             {mounted && isConnected && (
+              <>
               <Button
                 color="inherit"
-                variant="text"
+                variant={isMarketActive ? "contained" : "text"}
                 size="small"
                 startIcon={<TrendingUp />}
                 onClick={handleMarketClick}
                 sx={{ 
                   minWidth: { xs: 80, sm: 100 },
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.1)'
-                  }
+                  ...(isMarketActive ? {
+                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.3)'
+                    }
+                  } : {
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)'
+                    }
+                  })
                 }}
               >
                 Market
               </Button>
+                <Button
+                  color="inherit"
+                  variant={isStakingActive ? "contained" : "text"}
+                  size="small"
+                  startIcon={<AccountBalance />}
+                  onClick={handleStakingClick}
+                  sx={{ 
+                    minWidth: { xs: 80, sm: 100 },
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    ...(isStakingActive ? {
+                      bgcolor: 'rgba(255, 255, 255, 0.2)',
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 0.3)'
+                      }
+                    } : {
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 0.1)'
+                      }
+                    })
+                  }}
+                >
+                  Staking
+                </Button>
+              </>
             )}
           </Stack>
           
@@ -139,9 +192,13 @@ export default function Header({
                 }}
                 size="small"
                 sx={{
+                  height: 28,
                   '& .MuiToggleButton-root': {
                     color: 'rgba(255, 255, 255, 0.8)',
                     borderColor: 'rgba(255, 255, 255, 0.3)',
+                    fontSize: '0.7rem',
+                    padding: '4px 12px',
+                    minWidth: 'auto',
                     '&.Mui-selected': {
                       color: 'white',
                       bgcolor: 'rgba(255, 255, 255, 0.2)',
@@ -201,7 +258,26 @@ export default function Header({
               <Button
                 variant="contained"
                 size="small"
-                startIcon={<AccountBalanceWallet />}
+                startIcon={
+                  <Box
+                    component="span"
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 20,
+                      height: 20,
+                    }}
+                  >
+                    <Image
+                      src="/metamask.png"
+                      alt="MetaMask"
+                      width={20}
+                      height={20}
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </Box>
+                }
                 onClick={onConnect}
                 disabled={mounted && isConnecting}
                 sx={{ 

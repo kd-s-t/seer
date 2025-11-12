@@ -110,6 +110,19 @@ contract PredictionStaking {
 - ✅ Community engagement
 - ✅ Revenue opportunity
 
+**Example:**
+1. AI predicts: "Bitcoin will go up 5% in 24 hours" (Prediction ID: #123)
+2. User A stakes 1 BNB on this prediction (shows confidence)
+3. User B stakes 5 BNB on this prediction (shows high confidence)
+4. Total staked: 6 BNB
+5. After 24 hours, Bitcoin actually goes up 5.2% (prediction was accurate!)
+6. Rewards are distributed:
+   - User A gets: (1 BNB / 6 BNB) × total rewards = ~16.7% of rewards
+   - User B gets: (5 BNB / 6 BNB) × total rewards = ~83.3% of rewards
+7. If prediction was wrong, stakers lose their stake (or get partial refund based on rules)
+
+This creates a gamified system where users can earn rewards by backing accurate AI predictions with their own BNB.
+
 ---
 
 ### 3. NFT Prediction Badges

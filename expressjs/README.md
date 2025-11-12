@@ -1,6 +1,6 @@
 # Express.js Backend
 
-Node.js API server for Seer prediction market platform.
+Node.js API server for Seery prediction market platform.
 
 ## Installation
 
@@ -19,7 +19,9 @@ NETWORK=testnet
 BNB_TESTNET_RPC=https://data-seed-prebsc-1-s1.binance.org:8545
 BNB_MAINNET_RPC=https://bsc-dataseed.binance.org/
 CONTRACT_ADDRESS=0x...  # Deploy contract first (see bnb/README.md)
-PRIVATE_KEY=your-private-key  # For automated transactions (optional)
+PREDICTION_TRACKER_ADDRESS=0x...  # Deploy PredictionTracker contract (optional, for on-chain prediction tracking)
+PREDICTION_STAKING_ADDRESS=0x...  # Deploy PredictionStaking contract (optional, for on-chain prediction staking)
+PRIVATE_KEY=your-private-key  # For automated transactions (optional, required for on-chain prediction recording and staking registration)
 OPENAI_MODEL=gpt-3.5-turbo  # or gpt-4-turbo for better results
 
 # Binance Trading API (optional)
@@ -64,7 +66,8 @@ Required variables:
 Optional variables:
 - `BNB_TESTNET_RPC` - BNB Chain testnet RPC URL
 - `BNB_MAINNET_RPC` - BNB Chain mainnet RPC URL
-- `PRIVATE_KEY` - For automated transactions (optional)
+- `PREDICTION_TRACKER_ADDRESS` - PredictionTracker contract address (for on-chain prediction tracking)
+- `PRIVATE_KEY` - For automated transactions (required for on-chain prediction recording)
 - `OPENAI_MODEL` - OpenAI model to use (default: gpt-3.5-turbo)
 - `BINANCE_API_KEY` - Binance API key for trading (optional)
 - `BINANCE_SECRET_KEY` - Binance secret key for trading (optional)
@@ -109,9 +112,19 @@ npm test
 expressjs/
 ├── server.js         # Express API server
 ├── ai-service.js     # OpenAI integration
-├── blockchain.js     # BNB Chain integration
 ├── database.js       # SQLite database operations
 ├── prompts.js        # AI prompt templates
+├── lib/              # Library modules
+│   ├── binance/      # BNB Chain & Binance integration
+│   │   ├── provider.js           # Blockchain provider setup
+│   │   ├── contract.js           # PredictionMarket contract
+│   │   ├── predictionTracker.js # PredictionTracker contract
+│   │   ├── predictionStaking.js # PredictionStaking contract
+│   │   ├── utils.js              # Utility functions
+│   │   └── index.js              # Binance trading API
+│   ├── coingecko/    # CoinGecko API
+│   ├── openai/       # OpenAI integration
+│   └── news/         # News fetching
 ├── tests/            # Test suite
 └── docs/             # Documentation
 ```

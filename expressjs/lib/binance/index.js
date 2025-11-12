@@ -102,11 +102,57 @@ async function getOrderStatus(symbol, orderId) {
   });
 }
 
+const predictionStaking = require('./predictionStaking');
+const provider = require('./provider');
+const utils = require('./utils');
+
 module.exports = {
   placeOrder,
   getAccountInfo,
   getSymbolPrice,
   getOrderStatus,
   BINANCE_TESTNET,
+  initBlockchain: provider.initProvider,
+  getProvider: provider.getProvider,
+  getPredictionStaking: predictionStaking.getPredictionStaking,
+  recordPredictionOnChain: async (cryptoId, currentPrice, predictedPrice, direction, percentChange) => {
+    const staking = predictionStaking.getPredictionStaking();
+    if (!staking) return null;
+    const { ethers } = require('ethers');
+    const currentPriceWei = ethers.parseUnits(currentPrice.toString(), 18);
+    const predictedPriceWei = ethers.parseUnits(predictedPrice.toString(), 18);
+    const percentChangeScaled = Math.round(percentChange * 100);
+    const tx = await staking.recordPrediction(cryptoId, currentPriceWei, predictedPriceWei, direction, percentChangeScaled);
+    const receipt = await tx.wait();
+    const event = receipt.logs.find(log => {
+      try {
+        const parsed = staking.interface.parseLog(log);
+        return parsed && parsed.name === 'PredictionRecorded';
+      } catch {
+        return false;
+      }
+    });
+    if (event) {
+      const parsed = staking.interface.parseLog(event);
+      return { predictionId: parsed.args.predictionId.toString(), txHash: receipt.hash };
+    }
+    return { txHash: receipt.hash };
+  },
+  verifyPredictionOnChain: async (predictionId, actualPrice) => {
+    const staking = predictionStaking.getPredictionStaking();
+    if (!staking) throw new Error('PredictionStaking not initialized');
+    const { ethers } = require('ethers');
+    const { getWallet } = require('./provider');
+    const wallet = getWallet();
+    if (!wallet) throw new Error('Wallet not initialized');
+    const actualPriceWei = ethers.parseUnits(actualPrice.toString(), 18);
+    const tx = await staking.verifyPrediction(predictionId, actualPriceWei);
+    await tx.wait();
+    return tx.hash;
+  },
+  getUserStakedPredictions: predictionStaking.getUserStakedPredictions,
+  claimRewards: predictionStaking.claimRewards,
+  formatBNB: utils.formatBNB,
+  parseBNB: utils.parseBNB
 };
 

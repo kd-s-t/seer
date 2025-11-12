@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Box, Container, Typography } from '@mui/material'
 import { useContract, useMetaMask, useWallet, useNetwork } from '@/hooks'
 import { SnackbarState } from '@/types'
@@ -10,6 +11,9 @@ import NotificationSnackbar from '@/components/NotificationSnackbar'
 import Homepage from '@/components/Homepage'
 
 export default function Home() {
+  const router = useRouter()
+  const wasConnectedRef = useRef(false)
+  
   // Custom hooks
   const { address, isConnected, isConnecting, connectError, handleConnect, handleDisconnect, ensureTestnet } = useWallet()
   const { contractAddress, loading: contractLoading } = useContract()
@@ -36,6 +40,16 @@ export default function Home() {
     }
     handleConnect()
   }
+
+  // Redirect to market when wallet connects
+  useEffect(() => {
+    if (isConnected && !wasConnectedRef.current) {
+      wasConnectedRef.current = true
+      router.push('/market')
+    } else if (!isConnected) {
+      wasConnectedRef.current = false
+    }
+  }, [isConnected, router])
 
   // Auto-switch to testnet when connected
   useEffect(() => {

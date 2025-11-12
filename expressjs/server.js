@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const blockchain = require('./blockchain');
+const blockchain = require('./lib/binance');
 
 const app = express();
 const PORT = 3016;
@@ -15,29 +15,27 @@ app.use(express.json());
 
 blockchain.initBlockchain(process.env.NETWORK || 'testnet');
 
-const marketsRoutes = require('./routes/markets');
 const aiRoutes = require('./routes/ai');
 const newsRoutes = require('./routes/news');
 const cryptoRoutes = require('./routes/crypto');
 const configRoutes = require('./routes/config');
-const usersRoutes = require('./routes/users');
 const tradingRoutes = require('./routes/trading');
+const stakingRoutes = require('./routes/staking');
 const aiController = require('./controllers/aiController');
 const configController = require('./controllers/configController');
+const cryptoController = require('./controllers/cryptoController');
 
-app.use('/api/markets', marketsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/crypto', cryptoRoutes);
-app.use('/api/market-prediction', cryptoRoutes);
+app.get('/api/market-prediction', cryptoController.getCryptoPrices);
 app.use('/api/config', configRoutes);
-app.use('/api/users', usersRoutes);
 app.use('/api/trading', tradingRoutes);
+app.use('/api/staking', stakingRoutes);
 
 app.get('/api/news/test', (req, res) => {
   res.json({ success: true, message: 'News route is working' });
 });
-app.get('/api/markets/:id/ai-resolution', aiController.getMarketAIResolution);
 app.get('/health', configController.getHealth);
 
 app.use((err, req, res, next) => {

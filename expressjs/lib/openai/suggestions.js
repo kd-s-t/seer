@@ -1,10 +1,12 @@
 const { getOpenAIClient } = require('./client');
 const cache = require('./cache');
 
-async function generatePriceSuggestion(crypto) {
+async function generatePriceSuggestion(crypto, tags = null, bypassCache = false) {
+  if (!bypassCache) {
   const cached = cache.get('generatePriceSuggestion', crypto.symbol, crypto.price);
   if (cached) {
     return cached;
+    }
   }
   
   const openai = getOpenAIClient();
@@ -14,19 +16,20 @@ async function generatePriceSuggestion(crypto) {
   }
   
   try {
-    const prompt = `Analyze the current state of ${crypto.name} (${crypto.symbol}).
+    const bnbContext = (!tags || tags.length === 0) ? ' Also consider BNB (Binance Coin) market dynamics and its impact on the broader ecosystem.' : '';
+
+    const prompt = `Analyze the current state of ${crypto.name} (${crypto.symbol}).${bnbContext}
 
 Current Price: $${crypto.price.toFixed(2)}
 24h Change: ${crypto.change24h > 0 ? '+' : ''}${crypto.change24h.toFixed(2)}%
 
-Based on recent news, market trends, whale movements, and technical analysis, predict how much the price will change in the next 24-48 hours.
+Based on market trends, technical analysis, and market sentiment, predict how much the price will change in the next 24-48 hours.
 
 Consider:
-- Recent news and developments
-- Large wallet movements (whale deposits/withdrawals)
-- Market sentiment
-- Technical indicators
+- Price trends and technical indicators
+- Market sentiment and volatility
 - Trading volume patterns
+- General crypto market conditions
 
 Return JSON with this structure:
 {
@@ -42,7 +45,7 @@ Be realistic. Percent changes should typically be between -15% and +15% for 24-4
       messages: [
         {
           role: 'system',
-          content: 'You are a crypto market analyst. Provide realistic price predictions based on news, whale movements, and market analysis.'
+          content: 'You are a crypto market analyst. Provide realistic price predictions based on technical analysis and market trends.'
         },
         {
           role: 'user',
@@ -60,7 +63,8 @@ Be realistic. Percent changes should typically be between -15% and +15% for 24-4
     const result = {
       direction: suggestion.direction || 'neutral',
       percentChange: parseFloat(suggestion.percentChange) || 0,
-      reasoning: suggestion.reasoning || 'Analysis in progress'
+      reasoning: suggestion.reasoning || 'Analysis in progress',
+      newsSources: []
     };
     
     cache.set('generatePriceSuggestion', result, crypto.symbol, crypto.price);

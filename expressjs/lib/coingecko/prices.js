@@ -120,6 +120,13 @@ async function fetchCryptoPrices(symbols, currency = 'usd', forceRefresh = false
     
     if (usdData) {
       console.log('fetchCryptoPrices: Using cached data for symbols:', symbols);
+      // Add images to cached data if missing
+      usdData = usdData.map(crypto => {
+        if (!crypto.image) {
+          crypto.image = `https://assets.coingecko.com/coins/images/${getCoinImageId(crypto.id)}/small/${crypto.id}.png`;
+        }
+        return crypto;
+      });
     } else {
       console.log('fetchCryptoPrices: No cache found, fetching from API');
     }
@@ -128,10 +135,24 @@ async function fetchCryptoPrices(symbols, currency = 'usd', forceRefresh = false
       const ids = symbols.join(',');
       console.log('fetchCryptoPrices: Fetching from CoinGecko API with ids:', ids);
       
-      const response = await axios.get(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
-        { timeout: 10000 }
-      );
+      // Fetch both price data and coin details (for images)
+      const [priceResponse, coinResponse] = await Promise.all([
+        axios.get(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
+          { timeout: 10000 }
+        ),
+        axios.get(
+          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=250&page=1&sparkline=false`,
+          { timeout: 10000 }
+        ).catch(() => ({ data: [] })) // Fallback if this fails
+      ]);
+      
+      const response = priceResponse;
+      const coinDetails = coinResponse.data || [];
+      const coinImageMap = new Map();
+      coinDetails.forEach(coin => {
+        coinImageMap.set(coin.id, coin.image);
+      });
     
       if (!response.data) {
         throw new Error('No data received from CoinGecko API');
@@ -161,7 +182,8 @@ async function fetchCryptoPrices(symbols, currency = 'usd', forceRefresh = false
           name: symbol.charAt(0).toUpperCase() + symbol.slice(1).replace(/-/g, ' '),
           price: usdPrice,
           change24h: change24h,
-          currency: 'usd'
+          currency: 'usd',
+          image: coinImageMap.get(symbol) || `https://assets.coingecko.com/coins/images/${getCoinImageId(symbol)}/small/${symbol}.png`
         };
       }).filter(Boolean);
       
@@ -219,16 +241,32 @@ async function searchCrypto(query) {
 
 async function getCryptoLibrary() {
   try {
-    const response = await axios.get(
-      'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false'
-    );
+    const allCoins = [];
+    const pages = [1, 2, 3];
     
-    if (response.data && Array.isArray(response.data)) {
-      return response.data.map(coin => ({
+    for (const page of pages) {
+      try {
+        const response = await axios.get(
+          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${page}&sparkline=false`,
+          { timeout: 10000 }
+        );
+        
+        if (response.data && Array.isArray(response.data)) {
+          allCoins.push(...response.data);
+        }
+      } catch (error) {
+        console.warn(`Error fetching page ${page} of crypto library:`, error.message);
+      }
+    }
+    
+    if (allCoins.length > 0) {
+      const uniqueCoins = Array.from(new Map(allCoins.map(coin => [coin.id, coin])).values());
+      return uniqueCoins.map(coin => ({
         id: coin.id,
         name: coin.name,
         symbol: coin.symbol.toUpperCase(),
-        marketCap: coin.market_cap || 0
+        marketCap: coin.market_cap || 0,
+        image: coin.image
       })).sort((a, b) => b.marketCap - a.marketCap);
     }
     
@@ -236,7 +274,8 @@ async function getCryptoLibrary() {
       id,
       name: id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, ' '),
       symbol: SYMBOL_MAP[id] || id.toUpperCase(),
-      marketCap: 0
+      marketCap: 0,
+      image: `https://assets.coingecko.com/coins/images/${getCoinImageId(id)}/small/${id}.png`
     }));
   } catch (error) {
     console.error('Error fetching crypto library:', error);
@@ -244,9 +283,30 @@ async function getCryptoLibrary() {
       id,
       name: id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, ' '),
       symbol: SYMBOL_MAP[id] || id.toUpperCase(),
-      marketCap: 0
+      marketCap: 0,
+      image: `https://assets.coingecko.com/coins/images/${getCoinImageId(id)}/small/${id}.png`
     }));
   }
+}
+
+// Helper function to get CoinGecko image ID (most coins use their ID as the image path)
+function getCoinImageId(coinId) {
+  // CoinGecko uses the coin ID for most images, but some have special mappings
+  // For now, we'll use a simple mapping for common coins
+  const imageIdMap = {
+    'bitcoin': '1',
+    'ethereum': '279',
+    'binancecoin': '825',
+    'solana': '4128',
+    'cardano': '975',
+    'polkadot': '12171',
+    'chainlink': '877',
+    'avalanche-2': '12559',
+    'polygon': '4713',
+    'litecoin': '2'
+  };
+  
+  return imageIdMap[coinId] || coinId;
 }
 
 module.exports = {

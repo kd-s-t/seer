@@ -5,24 +5,19 @@
 </div>
 
 <div align="center"> 
-	<img src="./seerlogo.png" width="200px" alt="Seer Logo" />
+	<img src="./seerylogov2.png" width="200px" alt="Seery Logo" />
 </div>
 
-**Seer** is a decentralized prediction platform on BNB Chain that uses AI to create markets from news and resolve them faster than traditional oracles. Unlike UMA's 24-48h optimistic oracle, our AI-assisted resolution provides near-instant results while maintaining accuracy through evidence-based analysis. The platform automatically generates tradeable markets from current events, allows users to bet on outcomes, and uses AI to suggest resolutions based on verifiable facts. All bets and payouts are settled on-chain with a 2% platform fee. The modern web interface makes prediction markets accessible to non-technical users, addressing the UX gap in current DeFi prediction markets. Revenue is generated through platform fees, creating a sustainable business model.
+**Seery** is a decentralized prediction platform on BNB Chain that uses AI to create markets from news and resolve them faster than traditional oracles. Unlike UMA's 24-48h optimistic oracle, our AI-assisted resolution provides near-instant results while maintaining accuracy through evidence-based analysis. The platform automatically generates tradeable markets from current events, allows users to bet on outcomes, and uses AI to suggest resolutions based on verifiable facts. All bets and payouts are settled on-chain with a 2% platform fee. The modern web interface makes prediction markets accessible to non-technical users, addressing the UX gap in current DeFi prediction markets. Revenue is generated through platform fees, creating a sustainable business model.
 
 **Features:**
 - **BNB Chain**: Mainnet and testnet support for all transactions
-- **AI Market Generation**: Automatically generates tradeable markets from news articles
 - **AI-Powered Resolution**: Resolves markets in minutes instead of days using OpenAI
-- **On-Chain Settlement**: All bets and payouts settled on BNB Chain smart contracts
-- **MetaMask Integration**: Seamless wallet connection for market creation and betting
+- **On-Chain Prediction Tracking**: AI price predictions are automatically recorded on-chain for accuracy tracking and verification
 - **Real-Time Updates**: Live market data and pool sizes
-- **Revenue Model**: 2% platform fee on all winning bet payouts
 - **Fully On-Chain**: All market data stored on blockchain (no database)
-- **Smart Contract Testing**: Comprehensive Hardhat test suite
-- **Docker Support**: Full stack deployment with docker-compose
 
-Use cases for Seer include event prediction markets, news-based trading, sports betting, political predictions, crypto price predictions, and any scenario requiring fast, AI-assisted market resolution with on-chain settlement.
+Use cases for Seery include event prediction markets, news-based trading, sports betting, political predictions, crypto price predictions, and any scenario requiring fast, AI-assisted market resolution with on-chain settlement.
 
 ---  
 
@@ -167,6 +162,23 @@ Markets can be resolved:
 - [x] **Tests**: Basic test suite included
 - [x] **BNB Chain**: All contracts deployable to BNB Chain
 
+## On-Chain Prediction Accuracy Tracking
+
+Every time the market-prediction API is called (when refresh is pressed in the frontend), AI price predictions are automatically recorded on-chain using the `PredictionTracker` smart contract. This creates an immutable record of:
+
+- Current price at prediction time
+- Predicted price (based on direction and percent change)
+- Prediction timestamp
+- Direction (up/down) and percent change
+- Crypto asset ID
+
+Predictions can be verified later using Chainlink price feeds to calculate accuracy and build trust in AI performance. See [BNB_CHAIN_UTILIZATION.md](confluence/BNB_CHAIN_UTILIZATION.md) for more details.
+
+**Setup:**
+1. Deploy the `PredictionTracker` contract (see `bnb/contracts/PredictionTracker.sol`)
+2. Set `PREDICTION_TRACKER_ADDRESS` in your `.env` file
+3. Set `PRIVATE_KEY` for automated on-chain recording
+
 ## Future Enhancements
 
 - [ ] Account abstraction for gasless transactions
@@ -176,6 +188,7 @@ Markets can be resolved:
 - [ ] Social features (following traders, market discussions)
 - [ ] Multi-chain support
 - [ ] NFT rewards for top traders
+- [ ] Automatic prediction verification using Chainlink oracles
 
 **Built for Seedify Predictions Market Hackathon**
 

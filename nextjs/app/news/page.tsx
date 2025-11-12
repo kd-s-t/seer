@@ -31,6 +31,7 @@ export default function NewsPage() {
     handleConnect()
   }
 
+
   useEffect(() => {
     if (connectError) {
       const errorMessage = connectError.message || 'Failed to connect wallet'

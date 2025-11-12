@@ -1,5 +1,5 @@
 const openai = require('../lib/openai');
-const blockchain = require('../blockchain');
+const blockchain = require('../lib/binance');
 
 const generateMarkets = async (req, res) => {
   try {
@@ -97,43 +97,8 @@ const analyzeNews = async (req, res) => {
   }
 };
 
-const getMarketAIResolution = async (req, res) => {
-  try {
-    const marketId = parseInt(req.params.id);
-    const marketData = await blockchain.getMarketFromChain(marketId);
-    
-    if (!marketData) {
-      return res.status(404).json({
-        success: false,
-        error: 'Market not found'
-      });
-    }
-    
-    const outcomes = await blockchain.getMarketOutcomesFromChain(marketId);
-    
-    const aiResolution = await openai.suggestMarketResolution(
-      marketId,
-      marketData.question,
-      outcomes || []
-    );
-    
-    res.json({
-      success: true,
-      resolution: aiResolution,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error getting AI resolution:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get AI resolution'
-    });
-  }
-};
-
 module.exports = {
   generateMarkets,
-  analyzeNews,
-  getMarketAIResolution
+  analyzeNews
 };
 

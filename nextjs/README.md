@@ -1,6 +1,6 @@
 # Next.js Frontend
 
-Next.js 15 application for Seer prediction market platform.
+Next.js 15 application for Seery prediction market platform.
 
 ## Installation
 

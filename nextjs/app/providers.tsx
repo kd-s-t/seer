@@ -8,7 +8,15 @@ import { wagmiConfig } from '@/lib/wagmi'
 import { CurrencyProvider } from '@/contexts/CurrencyContext'
 import theme from './theme'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 3,
+      staleTime: 1000,
+    },
+  },
+})
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (

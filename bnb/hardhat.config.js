@@ -14,9 +14,10 @@ module.exports = {
       // Hardhat node provides accounts automatically
     },
     bnbTestnet: {
-      url: process.env.BNB_TESTNET_RPC || "https://data-seed-prebsc-1-s1.binance.org:8545",
+      url: process.env.BNB_TESTNET_RPC || "https://data-seed-prebsc-2-s1.binance.org:8545",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 97,
+      timeout: 60000,
     },
     bnbMainnet: {
       url: process.env.BNB_MAINNET_RPC || "https://bsc-dataseed.binance.org/",

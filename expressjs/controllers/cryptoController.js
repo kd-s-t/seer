@@ -1,119 +1,110 @@
 const coingecko = require('../lib/coingecko/prices');
 const openai = require('../lib/openai');
+const blockchain = require('../lib/binance');
 
 const getCryptoPrices = async (req, res) => {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'AI service unavailable. OPENAI_API_KEY not configured.',
+        cryptos: [],
+        timestamp: new Date().toISOString()
+      });
+    }
+
     let symbols = req.query.symbols ? req.query.symbols.split(',').filter(Boolean) : null;
     const tags = req.query.tags ? req.query.tags.split(',').filter(Boolean) : null;
     const currency = req.query.currency || 'usd';
     const forceRefresh = !!req.query._t;
     
-    if (forceRefresh) {
-      console.log('Backend: Force refresh requested - bypassing cache');
-    }
-    
-    // If tags are provided, use them instead of symbols
     let requestedSymbols = null;
     if (tags && tags.length > 0) {
-      requestedSymbols = [...tags]; // Create a copy to ensure we have the exact list
-      symbols = [...tags]; // Use tags as symbols
-      console.log('Backend: Tags provided:', tags);
-      console.log('Backend: Using tags for symbols:', symbols);
-      console.log('Backend: Requested symbols set to:', requestedSymbols);
+      requestedSymbols = [...tags];
+      symbols = [...tags];
     } else if (!symbols || symbols.length === 0) {
       symbols = await coingecko.getTrendingCryptos();
       requestedSymbols = [...symbols];
-      console.log('Backend: Using trending cryptos:', symbols);
     } else {
       requestedSymbols = [...symbols];
-      console.log('Backend: Using provided symbols:', symbols);
     }
     
-    console.log('Backend: Final requestedSymbols:', requestedSymbols);
-    console.log('Backend: Final symbols to fetch:', symbols);
+    if (!requestedSymbols || requestedSymbols.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Either symbols or tags parameter is required',
+        cryptos: [],
+        timestamp: new Date().toISOString()
+      });
+    }
     
     const priceData = await coingecko.fetchCryptoPrices(symbols, currency, forceRefresh);
     
-    console.log('Backend: Received priceData count:', priceData.length);
-    console.log('Backend: Requested symbols:', requestedSymbols);
-    console.log('Backend: PriceData IDs:', priceData.map(c => c.id));
-    
-    // STRICT Filter to only return cryptos that match the requested tags/symbols
     const requestedIds = new Set(requestedSymbols);
-    console.log('Backend: Requested IDs Set:', Array.from(requestedIds));
-    
-    // Build a map of requested cryptos only
     const requestedCryptoMap = new Map();
     priceData.forEach(crypto => {
       if (requestedIds.has(crypto.id)) {
         requestedCryptoMap.set(crypto.id, crypto);
-        console.log(`Backend: Including ${crypto.id} - in requested list`);
-      } else {
-        console.log(`Backend: EXCLUDING ${crypto.id} - NOT in requested list`);
       }
     });
     
-    // Create final array in the exact order of requestedSymbols
     const finalData = requestedSymbols
       .map(id => requestedCryptoMap.get(id))
-      .filter(Boolean); // Remove any undefined entries
+      .filter(Boolean);
     
-    console.log('Backend: Final filtered data count:', finalData.length);
-    console.log('Backend: Final filtered IDs:', finalData.map(c => c.id));
-    
-    // Final safety check - ensure we only return what was requested
-    if (finalData.length !== requestedSymbols.length) {
-      console.error(`Backend: ERROR - Filtered count (${finalData.length}) doesn't match requested count (${requestedSymbols.length})`);
-      console.error('Backend: Requested:', requestedSymbols);
-      console.error('Backend: Got:', finalData.map(c => c.id));
-      console.error('Backend: Original priceData had:', priceData.map(c => c.id));
-      console.error('Backend: RequestedCryptoMap has:', Array.from(requestedCryptoMap.keys()));
-    }
-    
-    // Use finalData - guaranteed to only contain requested cryptos
-    const dataToUse = finalData;
-    
-    // FINAL VERIFICATION - Double check we only have requested cryptos
-    const finalIds = new Set(dataToUse.map(c => c.id));
-    const requestedSet = new Set(requestedSymbols);
-    const extraIds = Array.from(finalIds).filter(id => !requestedSet.has(id));
-    if (extraIds.length > 0) {
-      console.error('Backend: CRITICAL ERROR - Found extra cryptos in final data:', extraIds);
-      // Remove any extra cryptos
-      const cleanedData = dataToUse.filter(c => requestedSet.has(c.id));
-      console.error('Backend: Cleaned data count:', cleanedData.length);
-      dataToUse.length = 0;
-      dataToUse.push(...cleanedData);
-    }
-    
-    console.log('Backend: FINAL dataToUse count:', dataToUse.length);
-    console.log('Backend: FINAL dataToUse IDs:', dataToUse.map(c => c.id));
-    
-    if (!process.env.OPENAI_API_KEY) {
-      const response = {
-        success: true,
-        cryptos: dataToUse.map(crypto => ({
-          ...crypto,
-          suggestion: null,
-          suggestionPercent: null,
-          reasoning: 'AI features disabled. OPENAI_API_KEY not configured.'
-        })),
-        tags: tags || [],
-        timestamp: new Date().toISOString()
-      };
-      console.log('Backend: Sending response with', response.cryptos.length, 'cryptos');
-      return res.json(response);
-    }
-    
+    const shouldBypassAICache = forceRefresh;
     const cryptosWithSuggestions = await Promise.all(
-      dataToUse.map(async (crypto) => {
+      finalData.map(async (crypto) => {
         try {
-          const suggestion = await openai.generatePriceSuggestion(crypto);
+          const suggestion = await openai.generatePriceSuggestion(crypto, tags, shouldBypassAICache);
+          
+          let predictionId = null;
+          let predictionTxHash = null;
+          
+          console.log(`[${crypto.symbol}] Suggestion:`, { direction: suggestion.direction, percentChange: suggestion.percentChange, forceRefresh });
+          
+          if (suggestion.direction && suggestion.percentChange && forceRefresh) {
+            console.log(`[${crypto.symbol}] Attempting to record prediction on-chain...`);
+            const currentPrice = crypto.price;
+            let predictedPrice;
+            
+            if (suggestion.direction === 'up') {
+              predictedPrice = currentPrice * (1 + suggestion.percentChange / 100);
+            } else if (suggestion.direction === 'down') {
+              predictedPrice = currentPrice * (1 - suggestion.percentChange / 100);
+            } else {
+              predictedPrice = currentPrice;
+            }
+            
+            try {
+              const onChainResult = await blockchain.recordPredictionOnChain(
+                crypto.id,
+                currentPrice,
+                predictedPrice,
+                suggestion.direction,
+                Math.abs(suggestion.percentChange)
+              );
+              
+              if (onChainResult && onChainResult.predictionId) {
+                predictionId = onChainResult.predictionId;
+                predictionTxHash = onChainResult.txHash || null;
+                
+                
+                console.log(`Recorded prediction on-chain for ${crypto.symbol}:`, onChainResult);
+              }
+            } catch (onChainError) {
+              console.error(`Failed to record prediction on-chain for ${crypto.symbol}:`, onChainError.message);
+            }
+          }
+          
           return {
             ...crypto,
             suggestion: suggestion.direction,
             suggestionPercent: suggestion.percentChange,
-            reasoning: suggestion.reasoning
+            reasoning: suggestion.reasoning,
+            newsSources: suggestion.newsSources || [],
+            predictionId: predictionId,
+            predictionTxHash: predictionTxHash
           };
         } catch (error) {
           console.error(`Error generating suggestion for ${crypto.symbol}:`, error);
@@ -133,14 +124,15 @@ const getCryptoPrices = async (req, res) => {
       tags: tags || [],
       timestamp: new Date().toISOString()
     };
-    console.log('Backend: Sending FINAL response with', response.cryptos.length, 'cryptos');
-    console.log('Backend: FINAL response crypto IDs:', response.cryptos.map(c => c.id));
+    
     res.json(response);
   } catch (error) {
     console.error('Error fetching crypto prices:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to fetch crypto prices'
+      error: error.message || 'Failed to fetch crypto prices',
+      cryptos: [],
+      timestamp: new Date().toISOString()
     });
   }
 };
@@ -152,7 +144,10 @@ const searchCrypto = async (req, res) => {
     if (!query) {
       return res.status(400).json({
         success: false,
-        error: 'Query parameter is required'
+        error: 'Query parameter is required',
+        results: [],
+        count: 0,
+        timestamp: new Date().toISOString()
       });
     }
     
@@ -168,7 +163,10 @@ const searchCrypto = async (req, res) => {
     console.error('Error searching crypto:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to search crypto'
+      error: error.message || 'Failed to search crypto',
+      results: [],
+      count: 0,
+      timestamp: new Date().toISOString()
     });
   }
 };
@@ -187,7 +185,10 @@ const getCryptoLibrary = async (req, res) => {
     console.error('Error fetching crypto library:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to fetch crypto library'
+      error: error.message || 'Failed to fetch crypto library',
+      library: [],
+      count: 0,
+      timestamp: new Date().toISOString()
     });
   }
 };

@@ -2,6 +2,7 @@ const getConfig = (req, res) => {
   res.json({
     success: true,
     contractAddress: process.env.CONTRACT_ADDRESS || null,
+    predictionStakingAddress: process.env.PREDICTION_STAKING_ADDRESS || null,
     network: process.env.NETWORK || 'testnet',
     timestamp: new Date().toISOString()
   });

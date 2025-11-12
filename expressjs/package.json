@@ -1,7 +1,7 @@
 {
-  "name": "seer",
+  "name": "seery",
   "version": "1.0.0",
-  "description": "Seer - AI-powered prediction market platform on BNB Chain",
+  "description": "Seery - AI-powered prediction market platform on BNB Chain",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

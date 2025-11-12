@@ -19,7 +19,7 @@ export async function getCryptoPrices(symbols?: string[], tags?: string[], curre
       params.append('_refresh', '1')
     }
     const queryString = params.toString()
-    const url = `${API_URL}/api/market-prediction/prices${queryString ? `?${queryString}` : ''}`
+    const url = `${API_URL}/api/market-prediction${queryString ? `?${queryString}` : ''}`
     
     if (forceRefresh) {
       console.log('Frontend: Force refresh - calling API:', url)
@@ -34,6 +34,17 @@ export async function getCryptoPrices(symbols?: string[], tags?: string[], curre
         'Expires': '0'
       }
     })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return {
+        success: false,
+        cryptos: [],
+        timestamp: new Date().toISOString(),
+        error: errorData.error || `Backend error: ${response.status} ${response.statusText}`
+      }
+    }
+    
     const data = await response.json()
     return data
   } catch (error: any) {

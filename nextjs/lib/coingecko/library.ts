@@ -3,6 +3,7 @@ export interface CryptoLibraryItem {
   name: string
   symbol: string
   marketCap: number
+  image?: string
 }
 
 export const CRYPTO_LIBRARY: CryptoLibraryItem[] = [
@@ -104,9 +105,118 @@ export const CRYPTO_LIBRARY: CryptoLibraryItem[] = [
   { id: 'magic-internet-money', name: 'Magic Internet Money', symbol: 'MIM', marketCap: 300000000 },
 ]
 
+// Helper function to get CoinGecko image URL for a coin
+function getCoinImageUrl(coinId: string): string {
+  // CoinGecko image ID mapping for common coins
+  const imageIdMap: Record<string, string> = {
+    'bitcoin': '1',
+    'ethereum': '279',
+    'binancecoin': '825',
+    'solana': '4128',
+    'cardano': '975',
+    'polkadot': '12171',
+    'chainlink': '877',
+    'avalanche-2': '12559',
+    'polygon': '4713',
+    'litecoin': '2',
+    'ripple': '52',
+    'dogecoin': '5',
+    'shiba-inu': '11939',
+    'tron': '1958',
+    'uniswap': '12504',
+    'stellar': '100',
+    'tether': '325',
+    'usd-coin': '6319',
+    'bitcoin-cash': '780',
+    'bitcoin-sv': '202',
+    'cosmos': '3794',
+    'ethereum-classic': '1321',
+    'monero': '69',
+    'algorand': '4030',
+    'filecoin': '3821',
+    'vechain': '1160',
+    'the-graph': '6719',
+    'aave': '6612',
+    'maker': '151',
+    'compound': '3499',
+    'dash': '19',
+    'zcash': '1437',
+    'tezos': '976',
+    'eos': '1765',
+    'iota': '1720',
+    'neo': '1376',
+    'waves': '986',
+    'decentraland': '2150',
+    'the-sandbox': '12129',
+    'axie-infinity': '13029',
+    'gala': '12493',
+    'enjin-coin': '1100',
+    'chiliz': '4066',
+    'flow': '5864',
+    'near': '11165',
+    'fantom': '3513',
+    'harmony': '3949',
+    'celo': '5567',
+    'hedera-hashgraph': '4648',
+    'theta-token': '2416',
+    'basic-attention-token': '1540',
+    '0x': '863',
+    'curve-dao-token': '5414',
+    'yearn-finance': '5873',
+    'sushi': '11976',
+    '1inch': '8104',
+    'pancakeswap-token': '12561',
+    'terra-luna': '4172',
+    'aptos': '26455',
+    'sui': '20947',
+    'optimism': '11844',
+    'arbitrum': '13188',
+    'immutable-x': '10603',
+    'loopring': '1934',
+    'zilliqa': '2469',
+    'icon': '2116',
+    'ontology': '2566',
+    'qtum': '1682',
+    'omisego': '1808',
+    'zcoin': '3139',
+    'ravencoin': '3652',
+    'siacoin': '1042',
+    'digibyte': '109',
+    'verge': '603',
+    'reddcoin': '118',
+    'pivx': '107',
+    'nano': '1210',
+    'dai': '9956',
+    'true-usd': '5246',
+    'binance-usd': '5038',
+    'wrapped-bitcoin': '7598',
+    'weth': '2396',
+    'crypto-com-chain': '3635',
+    'okb': '2318',
+    'huobi-token': '1724',
+    'ftx-token': '9023',
+    'kucoin-shares': '2087',
+    'leo-token': '3957',
+    'celo-dollar': '5566',
+    'paxos-standard': '3330',
+    'gemini-dollar': '3306',
+    'husd': '5017',
+    'usdd': '12961',
+    'frax': '6952',
+    'liquity-usd': '10123',
+    'magic-internet-money': '162'
+  }
+  
+  const imageId = imageIdMap[coinId] || coinId
+  return `https://assets.coingecko.com/coins/images/${imageId}/small/${coinId}.png`
+}
+
 export function getCryptoLibrary(): CryptoLibraryItem[] {
   const seen = new Set<string>()
-  const unique = CRYPTO_LIBRARY.filter(item => {
+  const unique = CRYPTO_LIBRARY.map(item => ({
+    ...item,
+    image: item.image || getCoinImageUrl(item.id)
+  })).filter(item => {
     if (seen.has(item.id)) {
       return false
     }
