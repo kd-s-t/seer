@@ -1,3 +1,3 @@
-export * from './contract'
+export * from './predictionStaking'
 export * from './types'
 

@@ -78,12 +78,10 @@ export default function StakingPage() {
       setSelectedPrediction(null)
       setStakeAmount('0.01')
       setStakeDirection('up')
-      fetchClaimable()
       
       setTimeout(async () => {
         console.log('Calling refetchPredictions after stake confirmation')
         refetchPredictions()
-        
       }, 3000)
     }
   }, [isConfirmed, receipt, selectedPrediction, address, predictionStakingAddress, refetchPredictions])
