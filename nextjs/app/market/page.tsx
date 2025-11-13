@@ -47,7 +47,7 @@ export default function MarketPage() {
 
   useEffect(() => {
     if (mounted && !isConnected && !isConnecting) {
-      router.push('/news')
+      router.push('/')
     }
   }, [mounted, isConnected, isConnecting, router])
 

@@ -49,6 +49,58 @@ export const PREDICTION_STAKING_ABI = [
     outputs: [{ name: '', type: 'uint256[]' }]
   },
   {
+    name: 'getStakesByUser',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [{
+      name: '',
+      type: 'tuple[]',
+      components: [
+        { name: 'predictionId', type: 'uint256' },
+        { name: 'cryptoId', type: 'string' },
+        { name: 'currentPrice', type: 'uint256' },
+        { name: 'predictedPrice', type: 'uint256' },
+        { name: 'actualPrice', type: 'uint256' },
+        { name: 'timestamp', type: 'uint256' },
+        { name: 'verified', type: 'bool' },
+        { name: 'accuracy', type: 'uint256' },
+        { name: 'direction', type: 'string' },
+        { name: 'percentChange', type: 'uint256' },
+        { name: 'expiresAt', type: 'uint256' },
+        { name: 'totalStakedUp', type: 'uint256' },
+        { name: 'totalStakedDown', type: 'uint256' },
+        { name: 'userStakeUp', type: 'uint256' },
+        { name: 'userStakeDown', type: 'uint256' }
+      ]
+    }]
+  },
+  {
+    name: 'getPrediction',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'predictionId', type: 'uint256' }],
+    outputs: [
+      { name: 'predictor', type: 'address' },
+      { name: 'cryptoId', type: 'string' },
+      { name: 'currentPrice', type: 'uint256' },
+      { name: 'predictedPrice', type: 'uint256' },
+      { name: 'actualPrice', type: 'uint256' },
+      { name: 'timestamp', type: 'uint256' },
+      { name: 'verified', type: 'bool' },
+      { name: 'accuracy', type: 'uint256' },
+      { name: 'direction', type: 'string' },
+      { name: 'percentChange', type: 'uint256' }
+    ]
+  },
+  {
+    name: 'getPredictionExpiry',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'predictionId', type: 'uint256' }],
+    outputs: [{ name: '', type: 'uint256' }]
+  },
+  {
     name: 'StakePlaced',
     type: 'event',
     inputs: [

@@ -32,7 +32,7 @@ import { getCryptoPrices, type CryptoPrice, type NewsSource } from '@/lib/coinge
 import { getCryptoLibrary, type CryptoLibraryItem } from '@/lib/coingecko/library'
 import { useStaking } from '@/hooks'
 import { parseEther } from 'viem'
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi'
 import { PREDICTION_STAKING_ABI } from '@/lib/blockchain/predictionStaking'
 import { useContract } from '@/hooks/useContract'
 // import { buyCrypto, sellCrypto } from '@/lib/binance/trading'
@@ -73,11 +73,40 @@ export default function CryptoTable() {
   const { isLoading: isWaitingRecord, isSuccess: isRecordConfirmed, data: recordReceipt, isError: isRecordError } = useWaitForTransactionReceipt({
     hash: recordHash
   })
+  const publicClient = usePublicClient()
   const [localReceipt, setLocalReceipt] = useState<any>(null)
   
   useEffect(() => {
     if (recordError && creatingPrediction) {
-      const errorMsg = (recordError as any)?.message || (recordError as any)?.shortMessage || 'Transaction failed'
+      console.error('❌ Record prediction write error:', recordError)
+      const error = recordError as any
+      
+      let errorMsg = 'Transaction failed'
+      
+      if (error?.shortMessage) {
+        errorMsg = error.shortMessage
+      } else if (error?.message) {
+        errorMsg = error.message
+        if (errorMsg.includes('revert')) {
+          const revertMatch = errorMsg.match(/revert\s+(.+)/i)
+          if (revertMatch) {
+            errorMsg = revertMatch[1]
+          }
+        }
+      } else if (error?.cause?.message) {
+        errorMsg = error.cause.message
+      } else if (error?.data?.message) {
+        errorMsg = error.data.message
+      }
+      
+      console.error('Error details:', {
+        message: error?.message,
+        shortMessage: error?.shortMessage,
+        cause: error?.cause,
+        data: error?.data,
+        extractedMessage: errorMsg
+      })
+      
       setStakeFieldError(errorMsg)
       setCreatingPrediction(false)
       setPendingRecordHash(null)
@@ -87,19 +116,110 @@ export default function CryptoTable() {
   
   useEffect(() => {
     if (isRecordError && creatingPrediction) {
-      setStakeFieldError('Transaction reverted. Please check the transaction details.')
+      console.error('❌ Record prediction receipt error:', isRecordError)
+      const error = isRecordError as any
+      
+      let errorMsg = 'Transaction reverted. Please check the transaction details.'
+      
+      if (error?.shortMessage) {
+        errorMsg = error.shortMessage
+      } else if (error?.message) {
+        errorMsg = error.message
+        if (errorMsg.includes('revert')) {
+          const revertMatch = errorMsg.match(/revert\s+(.+)/i)
+          if (revertMatch) {
+            errorMsg = revertMatch[1]
+          }
+        }
+      } else if (error?.cause?.message) {
+        errorMsg = error.cause.message
+      }
+      
+      console.error('Receipt error details:', {
+        message: error?.message,
+        shortMessage: error?.shortMessage,
+        cause: error?.cause,
+        data: error?.data,
+        reason: error?.reason,
+        extractedMessage: errorMsg,
+        fullError: error
+      })
+      
+      if (recordHash && publicClient) {
+        (async () => {
+          try {
+            const tx = await publicClient.getTransaction({ hash: recordHash })
+            console.log('🔍 Transaction details:', {
+              to: tx.to,
+              from: tx.from,
+              value: tx.value.toString(),
+              data: tx.input.substring(0, 20) + '...'
+            })
+            
+            try {
+              const revertReason = await publicClient.call({
+                to: tx.to,
+                data: tx.input,
+                value: tx.value,
+                account: tx.from
+              })
+              console.log('📋 Call result:', revertReason)
+            } catch (callErr: any) {
+              console.log('📋 Revert reason from call:', callErr?.message || callErr)
+              
+              if (callErr?.data) {
+                console.log('📋 Revert reason data:', callErr.data)
+                try {
+                  const { decodeErrorResult } = await import('viem')
+                  const decoded = decodeErrorResult({
+                    abi: PREDICTION_STAKING_ABI,
+                    data: callErr.data as `0x${string}`
+                  })
+                  console.log('✅ Decoded revert reason:', decoded)
+                  if (decoded.errorName && decoded.args) {
+                    const newErrorMsg = `${decoded.errorName}: ${decoded.args[0] || JSON.stringify(decoded.args)}`
+                    setStakeFieldError(newErrorMsg)
+                  }
+                } catch (decodeErr) {
+                  console.log('Could not decode error:', decodeErr)
+                  if (callErr?.message) {
+                    const msgMatch = callErr.message.match(/revert\s+(.+)/i)
+                    if (msgMatch) {
+                      setStakeFieldError(msgMatch[1])
+                    }
+                  }
+                }
+              } else if (callErr?.message) {
+                const msgMatch = callErr.message.match(/revert\s+(.+)/i)
+                if (msgMatch) {
+                  setStakeFieldError(msgMatch[1])
+                }
+              }
+            }
+          } catch (err) {
+            console.log('Could not get revert reason:', err)
+          }
+        })()
+      }
+      
+      setStakeFieldError(errorMsg)
       setCreatingPrediction(false)
       setPendingRecordHash(null)
       setPendingStake(null)
     }
-  }, [isRecordError, creatingPrediction])
+  }, [isRecordError, creatingPrediction, recordHash, publicClient])
   
   useEffect(() => {
     if (isRecordConfirmed && recordReceipt && pendingRecordHash && recordHash && recordHash === pendingRecordHash && creatingPrediction) {
       const processRecordPrediction = async () => {
         try {
           if (recordReceipt.status !== 'success') {
-            setStakeFieldError('Transaction failed')
+            console.error('❌ Transaction failed with status:', recordReceipt.status)
+            console.error('Receipt details:', recordReceipt)
+            const errorMsg = recordReceipt.status === 'reverted' 
+              ? 'Transaction reverted. Check console for details.' 
+              : 'Transaction failed'
+            setStakeFieldError(errorMsg)
             setCreatingPrediction(false)
             setPendingRecordHash(null)
             setPendingStake(null)
@@ -1195,7 +1315,27 @@ export default function CryptoTable() {
                   
                   const currentPriceWei = parseEther(String(currentPrice))
                   const predictedPriceWei = parseEther(String(predictedPrice))
-                  const percentChangeWei = BigInt(Math.floor(percentChange * 100))
+                  const percentChangeWei = BigInt(Math.floor(Math.abs(percentChange) * 100))
+                  
+                  console.log('📤 Calling recordPrediction with:', {
+                    cryptoId: selectedCryptoForStake.id,
+                    currentPrice: currentPrice.toString(),
+                    currentPriceWei: currentPriceWei.toString(),
+                    predictedPrice: predictedPrice.toString(),
+                    predictedPriceWei: predictedPriceWei.toString(),
+                    direction,
+                    percentChange: percentChange.toString(),
+                    percentChangeWei: percentChangeWei.toString(),
+                    contractAddress: predictionStakingAddress
+                  })
+                  
+                  if (!selectedCryptoForStake.id || selectedCryptoForStake.id.trim() === '') {
+                    throw new Error('Crypto ID is required')
+                  }
+                  
+                  if (currentPrice <= 0) {
+                    throw new Error('Current price must be greater than 0')
+                  }
                   
                   writeRecordPrediction({
                     address: predictionStakingAddress as `0x${string}`,

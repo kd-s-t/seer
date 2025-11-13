@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { AppBar, Toolbar, Typography, Button, Chip, Stack, Alert, Box, ToggleButtonGroup, ToggleButton } from '@mui/material'
-import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance } from '@mui/icons-material'
+import { AppBar, Toolbar, Typography, Button, Chip, Stack, Alert, Box, ToggleButtonGroup, ToggleButton, Menu, MenuItem, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material'
+import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance, ContentCopy, QrCode, CheckCircle, Close } from '@mui/icons-material'
 import { useNetwork } from '@/hooks/useNetwork'
 import { useCurrency } from '@/contexts/CurrencyContext'
 
@@ -28,10 +28,15 @@ export default function Header({
   const { networkName, isTestnet, isSwitching, switchToTestnet } = useNetwork()
   const { currency, setCurrency } = useCurrency()
   const [mounted, setMounted] = useState(false)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [qrOpen, setQrOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   
   const isNewsActive = pathname === '/news'
   const isMarketActive = pathname === '/market'
   const isStakingActive = pathname === '/staking'
+  
+  const open = Boolean(anchorEl)
 
   useEffect(() => {
     setMounted(true)
@@ -53,9 +58,27 @@ export default function Header({
     router.push('/staking')
   }
 
-  const displayAddress = mounted && address 
-    ? `${address.substring(0, 6)}...${address.substring(38)}` 
-    : 'Not connected'
+  const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleProfileClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleCopyAddress = async () => {
+    if (address) {
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+      handleProfileClose()
+    }
+  }
+
+  const handleShowQR = () => {
+    setQrOpen(true)
+    handleProfileClose()
+  }
 
   return (
     <>
@@ -216,44 +239,95 @@ export default function Header({
                 <ToggleButton value="php">PHP</ToggleButton>
               </ToggleButtonGroup>
             )}
-            {mounted && isConnected && (
-              <Box 
-                sx={{ 
-                  display: { xs: 'none', sm: 'flex' },
-                  flexDirection: 'column',
-                  alignItems: 'flex-end'
-                }}
-              >
-                <Typography variant="caption" sx={{ lineHeight: 1.2, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.8)' }}>
-                  {displayAddress}
-                </Typography>
-                <Chip
-                  label={networkName}
-                  color={isTestnet ? 'success' : 'default'}
-                  size="small"
-                  sx={{ height: 18, fontSize: '0.65rem', mt: 0.3, bgcolor: 'rgba(255, 255, 255, 0.2)' }}
-                />
-              </Box>
-            )}
             {mounted && isConnected ? (
-              <Button
-                color="inherit"
-                variant="outlined"
-                size="small"
-                startIcon={<Logout />}
-                onClick={onDisconnect}
-                sx={{ 
-                  minWidth: { xs: 80, sm: 100 },
-                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                  '&:hover': {
-                    borderColor: 'rgba(255, 255, 255, 0.8)',
-                    bgcolor: 'rgba(255, 255, 255, 0.1)'
-                  }
-                }}
-              >
-                Disconnect
-              </Button>
+              <>
+                <IconButton
+                  onClick={handleProfileClick}
+                  sx={{
+                    padding: '4px',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)'
+                    }
+                  }}
+                >
+                  <Avatar
+                    src="/10790816.png"
+                    alt="Profile"
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      bgcolor: 'rgba(255, 255, 255, 0.2)'
+                    }}
+                  />
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={open}
+                  onClose={handleProfileClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                >
+                  <MenuItem disabled>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                        Wallet Address
+                      </Typography>
+                      <Typography variant="caption" sx={{ wordBreak: 'break-all', color: 'text.secondary' }}>
+                        {address}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                  <MenuItem onClick={handleCopyAddress}>
+                    {copied ? <CheckCircle sx={{ mr: 1, fontSize: 18 }} /> : <ContentCopy sx={{ mr: 1, fontSize: 18 }} />}
+                    {copied ? 'Copied!' : 'Copy Address'}
+                  </MenuItem>
+                  <MenuItem onClick={handleShowQR}>
+                    <QrCode sx={{ mr: 1, fontSize: 18 }} />
+                    Show QR Code
+                  </MenuItem>
+                  <MenuItem onClick={() => { handleProfileClose(); onDisconnect(); }}>
+                    <Logout sx={{ mr: 1, fontSize: 18 }} />
+                    Disconnect
+                  </MenuItem>
+                </Menu>
+                <Dialog open={qrOpen} onClose={() => setQrOpen(false)} maxWidth="xs" fullWidth>
+                  <DialogTitle>
+                    Wallet Address QR Code
+                    <IconButton
+                      onClick={() => setQrOpen(false)}
+                      sx={{ position: 'absolute', right: 8, top: 8 }}
+                    >
+                      <Close />
+                    </IconButton>
+                  </DialogTitle>
+                  <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+                      <Box
+                        component="img"
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${address}`}
+                        alt="QR Code"
+                        sx={{ width: 200, height: 200, mb: 2 }}
+                      />
+                      <Typography variant="body2" sx={{ wordBreak: 'break-all', textAlign: 'center', color: 'text.secondary' }}>
+                        {address}
+                      </Typography>
+                    </Box>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={() => setQrOpen(false)}>Close</Button>
+                    <Button onClick={handleCopyAddress} startIcon={<ContentCopy />}>
+                      Copy Address
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </>
             ) : (
               <Button
                 variant="contained"

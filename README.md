@@ -5,7 +5,7 @@
 </div>
 
 <div align="center"> 
-	<img src="./seerylogov2.png" width="200px" alt="Seery Logo" />
+	<img src="./seerylogov3.png" width="200px" alt="Seery Logo" />
 </div>
 
 **Seery** is a decentralized prediction platform on BNB Chain that uses AI to create markets from news and resolve them faster than traditional oracles. Unlike UMA's 24-48h optimistic oracle, our AI-assisted resolution provides near-instant results while maintaining accuracy through evidence-based analysis. The platform automatically generates tradeable markets from current events, allows users to bet on outcomes, and uses AI to suggest resolutions based on verifiable facts. All bets and payouts are settled on-chain with a 2% platform fee. The modern web interface makes prediction markets accessible to non-technical users, addressing the UX gap in current DeFi prediction markets. Revenue is generated through platform fees, creating a sustainable business model.

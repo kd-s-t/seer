@@ -144,23 +144,17 @@ const getUserStakes = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'User address is required',
-        stakes: []
+        predictions: []
       });
     }
     
-    const predictionIds = await blockchain.getUserStakedPredictions(address);
-    const stakes = predictionIds.map((id) => ({
-      predictionId: id.toString(),
-      stakeAmount: '0',
-      totalStaked: '0',
-      prediction: [],
-      isExpired: false
-    }));
+    const predictionStaking = require('../lib/binance/predictionStaking');
+    const predictions = await predictionStaking.getUserStakesWithData(address);
     
     res.json({
       success: true,
-      stakes,
-      count: stakes.length,
+      predictions,
+      count: predictions.length,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -168,7 +162,7 @@ const getUserStakes = async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get user stakes',
-      stakes: [],
+      predictions: [],
       count: 0,
       timestamp: new Date().toISOString()
     });

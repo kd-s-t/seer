@@ -4,6 +4,7 @@ const nextConfig = {
   output: 'standalone',
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3016',
+    NEXT_PUBLIC_PREDICTION_STAKING_ADDRESS: process.env.NEXT_PUBLIC_PREDICTION_STAKING_ADDRESS,
   },
   webpack: (config, { isServer }) => {
     // Ignore optional dependencies that aren't needed for web

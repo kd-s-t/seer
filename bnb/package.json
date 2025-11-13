@@ -9,6 +9,9 @@
     "deploy": "hardhat run scripts/deploy.js --network bnbTestnet",
     "deploy:predictions": "hardhat run scripts/deployPredictions.js --network bnbTestnet",
     "deploy:predictions:local": "hardhat run scripts/deployPredictions.js --network localhost",
+    "check:address": "hardhat run scripts/checkAddress.js --network bnbTestnet",
+    "check:address:local": "hardhat run scripts/checkAddress.js --network localhost",
+    "verify:contract": "hardhat run scripts/verifyContract.js --network localhost",
     "node": "hardhat node"
   },
   "devDependencies": {

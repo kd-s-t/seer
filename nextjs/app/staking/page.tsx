@@ -19,7 +19,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  IconButton
+  IconButton,
+  Tooltip
 } from '@mui/material'
 import { TrendingUp, TrendingDown, AccessTime, AccountBalance, Close } from '@mui/icons-material'
 import { useWallet, useContract } from '@/hooks'
@@ -295,54 +296,64 @@ export default function StakingPage() {
                           <Typography variant="h6" fontWeight="bold">
                             {prediction.cryptoId}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Current: ${formatPrice(prediction.currentPrice)} → 
-                            Predicted: ${formatPrice(prediction.predictedPrice)}
-                          </Typography>
+                          <Tooltip title="Current market price vs the predicted price after the prediction period ends">
+                            <Typography variant="body2" color="text.secondary" sx={{ cursor: 'help' }}>
+                              Current: ${formatPrice(prediction.currentPrice)} → 
+                              Predicted: ${formatPrice(prediction.predictedPrice)}
+                            </Typography>
+                          </Tooltip>
                         </Box>
-                        <Chip
-                          icon={prediction.direction === 'up' ? <TrendingUp /> : <TrendingDown />}
-                          label={`${prediction.direction === 'up' ? '↑' : '↓'} ${formatPercent(prediction.percentChange)}%`}
-                          color={prediction.direction === 'up' ? 'success' : 'error'}
-                          size="small"
-                        />
+                        <Tooltip title={`Predicted ${prediction.direction === 'up' ? 'increase' : 'decrease'} in price by ${formatPercent(prediction.percentChange)}% - by Seery`}>
+                          <Chip
+                            icon={prediction.direction === 'up' ? <TrendingUp /> : <TrendingDown />}
+                            label={`${prediction.direction === 'up' ? '↑' : '↓'} ${formatPercent(prediction.percentChange)}%`}
+                            color={prediction.direction === 'up' ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </Tooltip>
                       </Box>
 
                       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
                         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <Chip
-                            icon={<TrendingUp />}
-                            label={`↑ ${parseFloat(prediction.totalStakedUp || '0').toFixed(4)} BNB`}
-                            size="small"
-                            variant="outlined"
-                            color="success"
-                          />
-                          <Chip
-                            icon={<TrendingDown />}
-                            label={`↓ ${parseFloat(prediction.totalStakedDown || '0').toFixed(4)} BNB`}
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                          />
-                          <Chip
-                            icon={<AccessTime />}
-                            label={getTimeRemaining(prediction.expiresAt)}
-                            size="small"
-                            variant="outlined"
-                          />
+                          <Tooltip title="Total amount staked by all users betting the price will go UP. If the price goes up, these stakers win rewards from the DOWN pool.">
+                            <Chip
+                              icon={<TrendingUp />}
+                              label={`↑ ${parseFloat(formatEther(BigInt(prediction.totalStakedUp || '0'))).toFixed(4)} BNB`}
+                              size="small"
+                              variant="outlined"
+                              color="success"
+                            />
+                          </Tooltip>
+                          <Tooltip title="Total amount staked by all users betting the price will go DOWN. If the price goes down, these stakers win rewards from the UP pool.">
+                            <Chip
+                              icon={<TrendingDown />}
+                              label={`↓ ${parseFloat(formatEther(BigInt(prediction.totalStakedDown || '0'))).toFixed(4)} BNB`}
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                            />
+                          </Tooltip>
+                          <Tooltip title="Time remaining until this prediction expires. After expiry, rewards are distributed to winning stakers.">
+                            <Chip
+                              icon={<AccessTime />}
+                              label={getTimeRemaining(prediction.expiresAt)}
+                              size="small"
+                              variant="outlined"
+                            />
+                          </Tooltip>
                           {(() => {
-                            console.log(`Prediction ${prediction.predictionId} - Checking stakes: userStakeUp="${prediction.userStakeUp}", userStakeDown="${prediction.userStakeDown}", type: ${typeof prediction.userStakeUp}`)
-                            const stakeUp = parseFloat(prediction.userStakeUp || '0')
-                            const stakeDown = parseFloat(prediction.userStakeDown || '0')
-                            console.log(`Prediction ${prediction.predictionId} - Parsed: stakeUp=${stakeUp}, stakeDown=${stakeDown}`)
+                            const stakeUp = parseFloat(formatEther(BigInt(prediction.userStakeUp || '0')))
+                            const stakeDown = parseFloat(formatEther(BigInt(prediction.userStakeDown || '0')))
                             if (stakeUp > 0 || stakeDown > 0) {
                               return (
-                                <Chip
-                                  icon={<AccountBalance />}
-                                  label={`Your stake: ↑${stakeUp.toFixed(4)} ↓${stakeDown.toFixed(4)}`}
-                                  size="small"
-                                  color="primary"
-                                />
+                                <Tooltip title="Your personal stake amounts. The first number is your stake for UP, the second is for DOWN.">
+                                  <Chip
+                                    icon={<AccountBalance />}
+                                    label={`Your stake: ↑${stakeUp.toFixed(4)} ↓${stakeDown.toFixed(4)}`}
+                                    size="small"
+                                    color="primary"
+                                  />
+                                </Tooltip>
                               )
                             }
                             return null
@@ -360,7 +371,7 @@ export default function StakingPage() {
                             setStakeFieldError(null);
                           }}
                         >
-                          {parseFloat(prediction.userStakeUp || '0') > 0 || parseFloat(prediction.userStakeDown || '0') > 0 ? 'Stake More' : 'Stake'}
+                          {parseFloat(formatEther(BigInt(prediction.userStakeUp || '0'))) > 0 || parseFloat(formatEther(BigInt(prediction.userStakeDown || '0'))) > 0 ? 'Stake More' : 'Stake'}
                         </Button>
                       </Box>
                     </Stack>
@@ -428,9 +439,9 @@ export default function StakingPage() {
                     Prediction: {selectedPrediction.direction === 'up' ? '↑' : '↓'} {formatPercent(selectedPrediction.percentChange)}%
                         </Typography>
                 </Box>
-                {(parseFloat(selectedPrediction.userStakeUp || '0') > 0 || parseFloat(selectedPrediction.userStakeDown || '0') > 0) && (
+                {(parseFloat(formatEther(BigInt(selectedPrediction.userStakeUp || '0'))) > 0 || parseFloat(formatEther(BigInt(selectedPrediction.userStakeDown || '0'))) > 0) && (
                   <Alert severity="info">
-                    Your current stake: ↑{parseFloat(selectedPrediction.userStakeUp || '0').toFixed(4)} BNB ↓{parseFloat(selectedPrediction.userStakeDown || '0').toFixed(4)} BNB
+                    Your current stake: ↑{parseFloat(formatEther(BigInt(selectedPrediction.userStakeUp || '0'))).toFixed(4)} BNB ↓{parseFloat(formatEther(BigInt(selectedPrediction.userStakeDown || '0'))).toFixed(4)} BNB
                   </Alert>
                 )}
                 <Box>

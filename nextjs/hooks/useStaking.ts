@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, usePublicClient, useReadContract, useAccount } from 'wagmi'
-import { parseEther, formatEther, createPublicClient, http } from 'viem'
+import { parseEther, formatEther } from 'viem'
 import { PREDICTION_STAKING_ABI } from '@/lib/blockchain/predictionStaking'
 import { useContract } from './useContract'
 
@@ -281,38 +281,19 @@ export function useStaking() {
 }
 
 export function useStakeablePredictions() {
-  const { predictionStakingAddress, loading: contractLoading } = useContract()
+  const { predictionStakingAddress } = useContract()
   const { address: userAddress } = useAccount()
   const [predictions, setPredictions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const wagmiPublicClient = usePublicClient()
-  
-  const publicClient = useMemo(() => {
-    return createPublicClient({
-      transport: http('http://localhost:8545'),
-    })
-  }, [])
+  const publicClient = usePublicClient()
 
   useEffect(() => {
-    console.log('useStakeablePredictions - addresses:', {
-      predictionStakingAddress,
-      contractLoading,
-      hasPublicClient: !!publicClient
-    })
-  }, [predictionStakingAddress, contractLoading, publicClient])
-
-
-  useEffect(() => {
-    if (!predictionStakingAddress || !publicClient) {
+    if (!predictionStakingAddress || !publicClient || !userAddress) {
       setLoading(false)
       if (!predictionStakingAddress) {
         setError('Contract address not configured')
       }
-      return
-    }
-
-    if (loading) {
       return
     }
 
@@ -321,31 +302,39 @@ export function useStakeablePredictions() {
         setLoading(true)
         setError(null)
 
-        if (!userAddress) {
-          setPredictions([])
-          setLoading(false)
-          return
-        }
-
-        const predictionIds = await publicClient.readContract({
+        const stakesData = await publicClient.readContract({
           address: predictionStakingAddress as `0x${string}`,
           abi: PREDICTION_STAKING_ABI,
-          functionName: 'getUserStakedPredictions',
+          functionName: 'getStakesByUser',
           args: [userAddress as `0x${string}`]
         })
         
-        if (!predictionIds || predictionIds.length === 0) {
+        if (!stakesData || stakesData.length === 0) {
           setPredictions([])
           setLoading(false)
           return
         }
 
-        const stakeable = predictionIds.map((id: bigint) => ({
-          predictionId: Number(id)
+        const predictionsData = stakesData.map((stake: any) => ({
+          predictionId: Number(stake.predictionId),
+          cryptoId: stake.cryptoId,
+          currentPrice: stake.currentPrice.toString(),
+          predictedPrice: stake.predictedPrice.toString(),
+          actualPrice: stake.actualPrice.toString(),
+          timestamp: stake.timestamp.toString(),
+          verified: stake.verified,
+          accuracy: stake.accuracy.toString(),
+          direction: stake.direction,
+          percentChange: stake.percentChange.toString(),
+          expiresAt: stake.expiresAt.toString(),
+          totalStakedUp: stake.totalStakedUp.toString(),
+          totalStakedDown: stake.totalStakedDown.toString(),
+          userStakeUp: stake.userStakeUp.toString(),
+          userStakeDown: stake.userStakeDown.toString()
         }))
 
-        setPredictions(stakeable)
-        if (stakeable.length === 0) {
+        setPredictions(predictionsData)
+        if (predictionsData.length === 0) {
           setError('No stakeable predictions found.')
         }
       } catch (err: any) {
@@ -360,29 +349,51 @@ export function useStakeablePredictions() {
   }, [predictionStakingAddress, publicClient, userAddress])
 
   const refetch = () => {
-    if (predictionStakingAddress && publicClient && userAddress) {
-      setLoading(true)
-      const fetchPredictions = async () => {
-        try {
-          setError(null)
-          const predictionIds = await publicClient.readContract({
-            address: predictionStakingAddress as `0x${string}`,
-            abi: PREDICTION_STAKING_ABI,
-            functionName: 'getUserStakedPredictions',
-            args: [userAddress as `0x${string}`]
-          })
-          const stakeable = predictionIds.map((id: bigint) => ({
-            predictionId: Number(id)
-          }))
-          setPredictions(stakeable)
+    if (!predictionStakingAddress || !publicClient || !userAddress) return
+    
+    setLoading(true)
+    const fetchPredictions = async () => {
+      try {
+        setError(null)
+        const stakesData = await publicClient.readContract({
+          address: predictionStakingAddress as `0x${string}`,
+          abi: PREDICTION_STAKING_ABI,
+          functionName: 'getStakesByUser',
+          args: [userAddress as `0x${string}`]
+        })
+        
+        if (!stakesData || stakesData.length === 0) {
+          setPredictions([])
           setLoading(false)
-        } catch (err: any) {
-          setError(err.message || 'Failed to refetch predictions')
-          setLoading(false)
+          return
         }
+
+        const predictionsData = stakesData.map((stake: any) => ({
+          predictionId: Number(stake.predictionId),
+          cryptoId: stake.cryptoId,
+          currentPrice: stake.currentPrice.toString(),
+          predictedPrice: stake.predictedPrice.toString(),
+          actualPrice: stake.actualPrice.toString(),
+          timestamp: stake.timestamp.toString(),
+          verified: stake.verified,
+          accuracy: stake.accuracy.toString(),
+          direction: stake.direction,
+          percentChange: stake.percentChange.toString(),
+          expiresAt: stake.expiresAt.toString(),
+          totalStakedUp: stake.totalStakedUp.toString(),
+          totalStakedDown: stake.totalStakedDown.toString(),
+          userStakeUp: stake.userStakeUp.toString(),
+          userStakeDown: stake.userStakeDown.toString()
+        }))
+
+        setPredictions(predictionsData)
+        setLoading(false)
+      } catch (err: any) {
+        setError(err.message || 'Failed to refetch predictions')
+        setLoading(false)
       }
-      fetchPredictions()
     }
+    fetchPredictions()
   }
 
   return { predictions, loading, error, refetch }

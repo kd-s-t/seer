@@ -85,6 +85,12 @@ contract PredictionStaking {
         string memory direction,
         uint256 percentChange
     ) external returns (uint256 predictionId) {
+        require(bytes(cryptoId).length > 0, "Crypto ID cannot be empty");
+        require(currentPrice > 0, "Current price must be greater than 0");
+        require(predictedPrice > 0, "Predicted price must be greater than 0");
+        require(bytes(direction).length > 0, "Direction cannot be empty");
+        require(keccak256(bytes(direction)) == keccak256(bytes("up")) || keccak256(bytes(direction)) == keccak256(bytes("down")), "Direction must be 'up' or 'down'");
+        
         predictionCount++;
         predictionId = predictionCount;
         
@@ -273,8 +279,57 @@ contract PredictionStaking {
         return block.timestamp >= predictionExpiry[predictionId];
     }
     
+    struct UserStakeData {
+        uint256 predictionId;
+        string cryptoId;
+        uint256 currentPrice;
+        uint256 predictedPrice;
+        uint256 actualPrice;
+        uint256 timestamp;
+        bool verified;
+        uint256 accuracy;
+        string direction;
+        uint256 percentChange;
+        uint256 expiresAt;
+        uint256 totalStakedUp;
+        uint256 totalStakedDown;
+        uint256 userStakeUp;
+        uint256 userStakeDown;
+    }
+    
     function getUserStakedPredictions(address user) external view returns (uint256[] memory) {
         return userStakedPredictions[user];
+    }
+    
+    function getStakesByUser(address user) external view returns (UserStakeData[] memory) {
+        uint256[] memory predictionIds = userStakedPredictions[user];
+        UserStakeData[] memory stakesData = new UserStakeData[](predictionIds.length);
+        
+        for (uint256 i = 0; i < predictionIds.length; i++) {
+            uint256 predictionId = predictionIds[i];
+            Prediction storage prediction = predictions[predictionId];
+            PredictionStakeInfo storage stakeInfo = predictionStakes[predictionId];
+            
+            stakesData[i] = UserStakeData({
+                predictionId: predictionId,
+                cryptoId: prediction.cryptoId,
+                currentPrice: prediction.currentPrice,
+                predictedPrice: prediction.predictedPrice,
+                actualPrice: prediction.actualPrice,
+                timestamp: prediction.timestamp,
+                verified: prediction.verified,
+                accuracy: prediction.accuracy,
+                direction: prediction.direction,
+                percentChange: prediction.percentChange,
+                expiresAt: predictionExpiry[predictionId],
+                totalStakedUp: stakeInfo.totalStakedUp,
+                totalStakedDown: stakeInfo.totalStakedDown,
+                userStakeUp: stakeInfo.userStakesUp[user],
+                userStakeDown: stakeInfo.userStakesDown[user]
+            });
+        }
+        
+        return stakesData;
     }
     
     function getPredictionExpiry(uint256 predictionId) external view returns (uint256) {
