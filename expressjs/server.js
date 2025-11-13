@@ -2,8 +2,6 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const blockchain = require('./lib/binance');
-
 const app = express();
 const PORT = 3016;
 
@@ -13,7 +11,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-blockchain.initBlockchain(process.env.NETWORK || 'testnet');
+// Blockchain interactions moved to frontend - no backend blockchain initialization needed
 
 const aiRoutes = require('./routes/ai');
 const newsRoutes = require('./routes/news');
@@ -55,7 +53,8 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Prediction Market API running on http://localhost:${PORT}`);
-  console.log(`⛓️  Blockchain: ${process.env.CONTRACT_ADDRESS ? 'Connected' : 'No contract address set'}`);
   console.log(`🤖 AI: ${process.env.OPENAI_API_KEY ? 'Enabled' : 'Disabled'}`);
-  console.log(`📊 Mode: Blockchain-only (no database)`);
+  console.log(`📰 News API: ${process.env.THENEWS_API_KEY ? 'Enabled' : 'Disabled'}`);
+  console.log(`💱 CoinGecko: Enabled`);
+  console.log(`📊 Mode: API-only (blockchain interactions in frontend)`);
 });

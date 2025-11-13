@@ -6,6 +6,8 @@ import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { wagmiConfig } from '@/lib/wagmi'
 import { CurrencyProvider } from '@/contexts/CurrencyContext'
+import { NavigationProvider } from '@/contexts/NavigationContext'
+import RouteLoading from '@/components/RouteLoading'
 import theme from './theme'
 
 const queryClient = new QueryClient({
@@ -24,8 +26,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <CurrencyProvider>
-            <CssBaseline />
-            {children}
+            <NavigationProvider>
+              <CssBaseline />
+              <RouteLoading />
+              {children}
+            </NavigationProvider>
           </CurrencyProvider>
         </ThemeProvider>
       </QueryClientProvider>

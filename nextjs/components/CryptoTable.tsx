@@ -499,7 +499,6 @@ export default function CryptoTable() {
           const CACHE_TTL = 21600000
           
           if (cacheAge < CACHE_TTL) {
-            console.log('Frontend: Using cached data for key:', cacheKey, 'count:', data.length)
             setUsdCryptos(data)
             if (showLoading) {
               setLoading(false)
@@ -756,31 +755,31 @@ export default function CryptoTable() {
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
                   backdropFilter: 'blur(10px)',
                   color: 'white',
                   borderRadius: '8px',
                   '& fieldset': {
-                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                  },
-                  '&:hover fieldset': {
                     borderColor: 'rgba(255, 255, 255, 0.5)',
                   },
-                  '&.Mui-focused fieldset': {
+                  '&:hover fieldset': {
                     borderColor: 'rgba(255, 255, 255, 0.7)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.9)',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: 'rgba(255, 255, 255, 0.9)',
                   '&.MuiInputLabel-shrink': {
-                    color: 'rgba(255, 255, 255, 0.9)',
+                    color: 'rgba(255, 255, 255, 1)',
                     transform: 'translate(14px, -9px) scale(0.75)',
                   },
                 },
                 '& .MuiInputBase-input': {
                   color: 'white',
                   '&::placeholder': {
-                    color: 'rgba(255, 255, 255, 0.5)',
+                    color: 'rgba(255, 255, 255, 0.7)',
                     opacity: 1,
                   },
                 },
@@ -844,10 +843,10 @@ export default function CryptoTable() {
                     />
                   ) : undefined}
                   sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                    bgcolor: 'rgba(255, 255, 255, 0.3)',
                     color: 'white',
                     '& .MuiChip-deleteIcon': {
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: 'rgba(255, 255, 255, 0.9)',
                       '&:hover': {
                         color: 'white',
                       },
@@ -863,21 +862,21 @@ export default function CryptoTable() {
               color: 'white',
             },
             '& .MuiAutocomplete-popupIndicator': {
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'rgba(255, 255, 255, 0.9)',
             },
             '& .MuiAutocomplete-clearIndicator': {
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'rgba(255, 255, 255, 0.9)',
             },
             '& .MuiAutocomplete-listbox': {
-              bgcolor: 'rgba(102, 126, 234, 0.95)',
+              bgcolor: 'rgba(102, 126, 234, 0.98)',
               backdropFilter: 'blur(10px)',
               '& .MuiAutocomplete-option': {
                 color: 'white',
                 '&[aria-selected="true"]': {
-                  bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  bgcolor: 'rgba(255, 255, 255, 0.3)',
                 },
                 '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
                 },
               },
             },
@@ -893,17 +892,17 @@ export default function CryptoTable() {
             disabled={isRefreshing || loading}
             sx={{
               color: 'white',
-              borderColor: 'rgba(255, 255, 255, 0.5)',
+              borderColor: 'rgba(255, 255, 255, 0.7)',
               '&:hover': {
-                borderColor: 'rgba(255, 255, 255, 0.8)',
-                bgcolor: 'rgba(255, 255, 255, 0.1)'
+                borderColor: 'rgba(255, 255, 255, 0.9)',
+                bgcolor: 'rgba(255, 255, 255, 0.2)'
               }
             }}
           >
             Refresh
           </Button>
           {lastFetchTime && (
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.75rem' }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.75rem' }}>
               Last updated: {formatLastFetchTime(lastFetchTime)}
             </Typography>
           )}

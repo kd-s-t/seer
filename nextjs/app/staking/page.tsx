@@ -38,10 +38,6 @@ export default function StakingPage() {
   const { predictionStakingAddress, loading: contractLoading } = useContract()
   const { address: wagmiAddress } = useAccount()
   const { predictions, loading: predictionsLoading, error: predictionsError, refetch: refetchPredictions } = useStakeablePredictions()
-  
-  useEffect(() => {
-    console.log('StakingPage - Connected address:', address, 'wagmiAddress:', wagmiAddress)
-  }, [address, wagmiAddress])
   const { stake, claimRewards, isPending, isConfirming, isConfirmed, error: stakeError, receipt } = useStaking()
   
   const [selectedPrediction, setSelectedPrediction] = useState<any>(null)
@@ -50,7 +46,6 @@ export default function StakingPage() {
   const [stakeDirection, setStakeDirection] = useState<'up' | 'down'>('up')
   const [stakeFieldError, setStakeFieldError] = useState<string | null>(null)
   const [claimablePredictions, setClaimablePredictions] = useState<any[]>([])
-  const [loadingClaimable, setLoadingClaimable] = useState(false)
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
@@ -104,27 +99,30 @@ export default function StakingPage() {
     }
   }, [stakeError])
 
-  const fetchClaimable = async () => {
-    if (!address) return
-    try {
-      setLoadingClaimable(true)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3016'}/api/staking/claimable?address=${address}`)
-      const data = await response.json()
-      if (data.success) {
-        setClaimablePredictions(data.predictions)
-      }
-    } catch (error) {
-      console.error('Error fetching claimable:', error)
-    } finally {
-      setLoadingClaimable(false)
-    }
-  }
-
+  // Calculate claimable predictions from blockchain data
+  // A prediction is claimable if:
+  // 1. It's verified
+  // 2. It has expired
+  // 3. User has staked on it
   useEffect(() => {
-    if (address) {
-      fetchClaimable()
+    if (!predictions || predictions.length === 0) {
+      setClaimablePredictions([])
+      return
     }
-  }, [address])
+
+    const now = Date.now()
+    const claimable = predictions.filter((prediction: any) => {
+      const expiresAt = parseInt(prediction.expiresAt) * 1000
+      const hasStake = parseFloat(formatEther(BigInt(prediction.userStakeUp || '0'))) > 0 || 
+                       parseFloat(formatEther(BigInt(prediction.userStakeDown || '0'))) > 0
+      const isExpired = expiresAt > 0 && expiresAt < now
+      const isVerified = prediction.verified === true
+      
+      return isVerified && isExpired && hasStake
+    })
+
+    setClaimablePredictions(claimable)
+  }, [predictions])
 
   useEffect(() => {
     if (!mounted) return
@@ -195,6 +193,37 @@ export default function StakingPage() {
       return (num / 100).toFixed(2)
     } catch {
       return '0.00'
+    }
+  }
+
+  // Calculate predicted price from current price and percentChange
+  // percentChange is stored scaled by 100 (e.g., 830 = 8.30%), so divide by 10000 to get decimal (0.083)
+  const calculatePredictedPrice = (currentPriceWei: string, percentChange: string, direction: string) => {
+    try {
+      const currentPrice = parseFloat(formatEther(BigInt(currentPriceWei)))
+      const percentDecimal = parseFloat(percentChange) / 10000 // percentChange is scaled by 100, so divide by 10000 to get decimal
+      const multiplier = direction === 'up' ? (1 + percentDecimal) : (1 - percentDecimal)
+      const calculatedPredicted = currentPrice * multiplier
+      return calculatedPredicted.toFixed(6) // Use more precision for small prices
+    } catch {
+      return formatPrice(currentPriceWei) // Fallback to current price
+    }
+  }
+
+  // Calculate actual direction based on calculated predicted price
+  // The stored predictedPrice may be incorrect, so we calculate it from currentPrice and percentChange
+  const getActualDirection = (currentPriceWei: string, percentChange: string, storedDirection: string) => {
+    try {
+      const currentPrice = parseFloat(formatEther(BigInt(currentPriceWei)))
+      const percentDecimal = parseFloat(percentChange) / 10000 // percentChange is scaled by 100, so divide by 10000 to get decimal
+      
+      // Calculate predicted price based on stored direction
+      const calculatedPredicted = currentPrice * (storedDirection === 'up' ? (1 + percentDecimal) : (1 - percentDecimal))
+      
+      // Direction is determined by whether calculated predicted price is higher or lower than current
+      return calculatedPredicted > currentPrice ? 'up' : 'down'
+    } catch {
+      return storedDirection // Fallback to stored direction
     }
   }
 
@@ -298,19 +327,26 @@ export default function StakingPage() {
                           </Typography>
                           <Tooltip title="Current market price vs the predicted price after the prediction period ends">
                             <Typography variant="body2" color="text.secondary" sx={{ cursor: 'help' }}>
-                              Current: ${formatPrice(prediction.currentPrice)} → 
-                              Predicted: ${formatPrice(prediction.predictedPrice)}
+                              {(() => {
+                                const calculatedPredicted = calculatePredictedPrice(prediction.currentPrice, prediction.percentChange, prediction.direction)
+                                return `Current: $${formatPrice(prediction.currentPrice)} → Predicted: $${calculatedPredicted}`
+                              })()}
                             </Typography>
                           </Tooltip>
                         </Box>
-                        <Tooltip title={`Predicted ${prediction.direction === 'up' ? 'increase' : 'decrease'} in price by ${formatPercent(prediction.percentChange)}% - by Seery`}>
-                          <Chip
-                            icon={prediction.direction === 'up' ? <TrendingUp /> : <TrendingDown />}
-                            label={`${prediction.direction === 'up' ? '↑' : '↓'} ${formatPercent(prediction.percentChange)}%`}
-                            color={prediction.direction === 'up' ? 'success' : 'error'}
-                            size="small"
-                          />
-                        </Tooltip>
+                        {(() => {
+                          const actualDirection = getActualDirection(prediction.currentPrice, prediction.percentChange, prediction.direction)
+                          return (
+                            <Tooltip title={`Predicted ${actualDirection === 'up' ? 'increase' : 'decrease'} in price by ${formatPercent(prediction.percentChange)}% - by Seery`}>
+                              <Chip
+                                icon={actualDirection === 'up' ? <TrendingUp /> : <TrendingDown />}
+                                label={`${actualDirection === 'up' ? '↑' : '↓'} ${formatPercent(prediction.percentChange)}%`}
+                                color={actualDirection === 'up' ? 'success' : 'error'}
+                                size="small"
+                              />
+                            </Tooltip>
+                          )
+                        })()}
                       </Box>
 
                       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
@@ -395,7 +431,7 @@ export default function StakingPage() {
                           Prediction #{prediction.predictionId}: {prediction.cryptoId}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Your stake: {parseFloat(prediction.userStake || '0').toFixed(4)} BNB
+                          Your stake: ↑{parseFloat(formatEther(BigInt(prediction.userStakeUp || '0'))).toFixed(4)} ↓{parseFloat(formatEther(BigInt(prediction.userStakeDown || '0'))).toFixed(4)} BNB
                         </Typography>
                         <Button
                           size="small"
@@ -433,7 +469,7 @@ export default function StakingPage() {
               <Stack spacing={2} sx={{ mt: 1 }}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
-                    Current: ${formatPrice(selectedPrediction.currentPrice)} → Predicted: ${formatPrice(selectedPrediction.predictedPrice)}
+                    Current: ${formatPrice(selectedPrediction.currentPrice)} → Predicted: ${calculatePredictedPrice(selectedPrediction.currentPrice, selectedPrediction.percentChange, selectedPrediction.direction)}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                     Prediction: {selectedPrediction.direction === 'up' ? '↑' : '↓'} {formatPercent(selectedPrediction.percentChange)}%

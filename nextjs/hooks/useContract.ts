@@ -9,9 +9,6 @@ export function useContract() {
     const address = process.env.NEXT_PUBLIC_PREDICTION_STAKING_ADDRESS || null
     if (address) {
       setPredictionStakingAddress(address)
-      console.log('Set predictionStakingAddress from env:', address)
-    } else {
-      console.warn('PREDICTION_STAKING_ADDRESS not set in environment variables')
     }
     setLoading(false)
   }, [])

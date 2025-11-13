@@ -1,6 +1,5 @@
 const coingecko = require('../lib/coingecko/prices');
 const openai = require('../lib/openai');
-const blockchain = require('../lib/binance');
 
 const getCryptoPrices = async (req, res) => {
   try {
@@ -58,43 +57,18 @@ const getCryptoPrices = async (req, res) => {
         try {
           const suggestion = await openai.generatePriceSuggestion(crypto, tags, shouldBypassAICache);
           
-          let predictionId = null;
-          let predictionTxHash = null;
+          console.log(`[${crypto.symbol}] Suggestion:`, { direction: suggestion.direction, percentChange: suggestion.percentChange });
           
-          console.log(`[${crypto.symbol}] Suggestion:`, { direction: suggestion.direction, percentChange: suggestion.percentChange, forceRefresh });
+          // Calculate predicted price for frontend to use when recording on-chain
+          const currentPrice = crypto.price;
+          let predictedPrice;
           
-          if (suggestion.direction && suggestion.percentChange && forceRefresh) {
-            console.log(`[${crypto.symbol}] Attempting to record prediction on-chain...`);
-            const currentPrice = crypto.price;
-            let predictedPrice;
-            
-            if (suggestion.direction === 'up') {
-              predictedPrice = currentPrice * (1 + suggestion.percentChange / 100);
-            } else if (suggestion.direction === 'down') {
-              predictedPrice = currentPrice * (1 - suggestion.percentChange / 100);
-            } else {
-              predictedPrice = currentPrice;
-            }
-            
-            try {
-              const onChainResult = await blockchain.recordPredictionOnChain(
-                crypto.id,
-                currentPrice,
-                predictedPrice,
-                suggestion.direction,
-                Math.abs(suggestion.percentChange)
-              );
-              
-              if (onChainResult && onChainResult.predictionId) {
-                predictionId = onChainResult.predictionId;
-                predictionTxHash = onChainResult.txHash || null;
-                
-                
-                console.log(`Recorded prediction on-chain for ${crypto.symbol}:`, onChainResult);
-              }
-            } catch (onChainError) {
-              console.error(`Failed to record prediction on-chain for ${crypto.symbol}:`, onChainError.message);
-            }
+          if (suggestion.direction === 'up') {
+            predictedPrice = currentPrice * (1 + suggestion.percentChange / 100);
+          } else if (suggestion.direction === 'down') {
+            predictedPrice = currentPrice * (1 - suggestion.percentChange / 100);
+          } else {
+            predictedPrice = currentPrice;
           }
           
           return {
@@ -103,8 +77,14 @@ const getCryptoPrices = async (req, res) => {
             suggestionPercent: suggestion.percentChange,
             reasoning: suggestion.reasoning,
             newsSources: suggestion.newsSources || [],
-            predictionId: predictionId,
-            predictionTxHash: predictionTxHash
+            // Include prediction data for frontend to record on-chain if needed
+            predictionData: {
+              cryptoId: crypto.id,
+              currentPrice,
+              predictedPrice,
+              direction: suggestion.direction,
+              percentChange: Math.abs(suggestion.percentChange)
+            }
           };
         } catch (error) {
           console.error(`Error generating suggestion for ${crypto.symbol}:`, error);

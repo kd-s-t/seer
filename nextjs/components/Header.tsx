@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { AppBar, Toolbar, Typography, Button, Chip, Stack, Alert, Box, ToggleButtonGroup, ToggleButton, Menu, MenuItem, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material'
 import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance, ContentCopy, QrCode, CheckCircle, Close } from '@mui/icons-material'
+import { useBalance } from 'wagmi'
 import { useNetwork } from '@/hooks/useNetwork'
 import { useCurrency } from '@/contexts/CurrencyContext'
+import { useNavigation } from '@/contexts/NavigationContext'
+import { getCryptoPrices } from '@/lib/coingecko/prices'
 
 interface HeaderProps {
   address: string | undefined
@@ -25,12 +28,27 @@ export default function Header({
 }: HeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { networkName, isTestnet, isSwitching, switchToTestnet } = useNetwork()
-  const { currency, setCurrency } = useCurrency()
+  const { networkName, isTestnet, isSwitching, switchToTestnet, chainId } = useNetwork()
+  const { currency, setCurrency, convertPrice, formatPrice, getCurrencySymbol } = useCurrency()
+  const { setLoading } = useNavigation()
   const [mounted, setMounted] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [qrOpen, setQrOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [bnbPrice, setBnbPrice] = useState<number | null>(null)
+  
+  const { data: balance } = useBalance({
+    address: address as `0x${string}` | undefined,
+    chainId: chainId,
+  })
+  
+  const formattedBalance = useMemo(() => {
+    if (balance && bnbPrice) {
+      const usdValue = parseFloat(balance.formatted) * bnbPrice
+      return formatPrice(usdValue)
+    }
+    return null
+  }, [balance, bnbPrice, currency, formatPrice])
   
   const isNewsActive = pathname === '/news'
   const isMarketActive = pathname === '/market'
@@ -42,19 +60,45 @@ export default function Header({
     setMounted(true)
   }, [])
 
+  useEffect(() => {
+    const fetchBnbPrice = async () => {
+      try {
+        const response = await getCryptoPrices(['binancecoin'], undefined, 'usd')
+        if (response.success && response.cryptos && response.cryptos.length > 0) {
+          const bnbCrypto = response.cryptos.find((c: any) => c.id === 'binancecoin' || c.symbol === 'BNB')
+          if (bnbCrypto) {
+            setBnbPrice(bnbCrypto.price)
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch BNB price')
+      }
+    }
+    
+    if (isConnected) {
+      fetchBnbPrice()
+      const interval = setInterval(fetchBnbPrice, 60000)
+      return () => clearInterval(interval)
+    }
+  }, [isConnected])
+
   const handleLogoClick = () => {
+    setLoading(true)
     router.push('/')
   }
 
   const handleMarketClick = () => {
+    setLoading(true)
     router.push('/market')
   }
 
   const handleNewsClick = () => {
+    setLoading(true)
     router.push('/news')
   }
 
   const handleStakingClick = () => {
+    setLoading(true)
     router.push('/staking')
   }
 
@@ -274,25 +318,90 @@ export default function Header({
                     horizontal: 'right',
                   }}
                 >
-                  <MenuItem disabled>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1.5,
+                      minHeight: 48,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      width: '100%',
+                      borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#000000' }}>
                         Wallet Address
                       </Typography>
-                      <Typography variant="caption" sx={{ wordBreak: 'break-all', color: 'text.secondary' }}>
-                        {address}
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton
+                          size="small"
+                          onClick={handleCopyAddress}
+                          sx={{ 
+                            color: '#000000',
+                            p: 0.5,
+                            '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                          }}
+                        >
+                          {copied ? <CheckCircle sx={{ fontSize: 18 }} /> : <ContentCopy sx={{ fontSize: 18 }} />}
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={handleShowQR}
+                          sx={{ 
+                            color: '#000000',
+                            p: 0.5,
+                            '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                          }}
+                        >
+                          <QrCode sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                    <Typography variant="caption" sx={{ wordBreak: 'break-all', color: '#000000' }}>
+                      {address}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1.5,
+                      minHeight: 48,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      width: '100%',
+                      borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#000000' }}>
+                        Balance
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#000000', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {formattedBalance && balance ? (
+                          <>
+                            <span>{parseFloat(balance.formatted).toFixed(4)} BNB</span>
+                            <span>({formattedBalance})</span>
+                          </>
+                        ) : (
+                          <span>{balance ? `${parseFloat(balance.formatted).toFixed(4)} BNB` : '0.0000 BNB'}</span>
+                        )}
                       </Typography>
                     </Box>
-                  </MenuItem>
-                  <MenuItem onClick={handleCopyAddress}>
-                    {copied ? <CheckCircle sx={{ mr: 1, fontSize: 18 }} /> : <ContentCopy sx={{ mr: 1, fontSize: 18 }} />}
-                    {copied ? 'Copied!' : 'Copy Address'}
-                  </MenuItem>
-                  <MenuItem onClick={handleShowQR}>
-                    <QrCode sx={{ mr: 1, fontSize: 18 }} />
-                    Show QR Code
-                  </MenuItem>
-                  <MenuItem onClick={() => { handleProfileClose(); onDisconnect(); }}>
+                  </Box>
+                  <MenuItem 
+                    onClick={() => { handleProfileClose(); onDisconnect(); }}
+                    sx={{ 
+                      justifyContent: 'center',
+                      color: '#d32f2f',
+                      '&:hover': {
+                        bgcolor: 'rgba(211, 47, 47, 0.08)'
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: '#d32f2f'
+                      }
+                    }}
+                  >
                     <Logout sx={{ mr: 1, fontSize: 18 }} />
                     Disconnect
                   </MenuItem>
@@ -315,7 +424,7 @@ export default function Header({
                         alt="QR Code"
                         sx={{ width: 200, height: 200, mb: 2 }}
                       />
-                      <Typography variant="body2" sx={{ wordBreak: 'break-all', textAlign: 'center', color: 'text.secondary' }}>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-all', textAlign: 'center', color: 'text.primary' }}>
                         {address}
                       </Typography>
                     </Box>
