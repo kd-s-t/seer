@@ -6,7 +6,7 @@ WORKDIR /app
 # Install Python and build tools for native dependencies
 RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Rebuild the source code only when needed
 FROM base AS builder
