@@ -20,7 +20,8 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: expressjs/package-lock.json
+          cache-dependency-path: |
+            expressjs/package-lock.json
       
       - name: Install dependencies
         working-directory: ./expressjs
@@ -47,7 +48,8 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: nextjs/package-lock.json
+          cache-dependency-path: |
+            nextjs/package-lock.json
       
       - name: Install dependencies
         working-directory: ./nextjs
@@ -76,7 +78,8 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: bnb/package-lock.json
+          cache-dependency-path: |
+            bnb/package-lock.json
       
       - name: Install dependencies
         working-directory: ./bnb
