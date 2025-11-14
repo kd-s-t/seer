@@ -1,13 +1,5 @@
 function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname
-    const protocol = window.location.protocol
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:3016'
-    }
-    return `${protocol}//${hostname}/api`
-  }
-  return process.env.NEXT_PUBLIC_SEERY_BACKEND_DOMAIN || process.env.SEERY_BACKEND_DOMAIN || 'http://localhost:3016'
+  return process.env.NEXT_PUBLIC_SEERY_BACKEND_DOMAIN || ''
 }
 
 const API_BASE_URL = getApiBaseUrl()
