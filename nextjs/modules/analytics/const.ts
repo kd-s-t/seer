@@ -1,0 +1,3 @@
+export const ADMIN_ADDRESS = '0x4D3EbC244B5d875F8b284e54e76acBb7Eaf1afAe'
+export const REFRESH_INTERVAL = 30000
+

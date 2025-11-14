@@ -5,10 +5,10 @@ if [ -d "nextjs" ]; then
   echo "📦 Type checking Next.js..."
   cd nextjs
   if [ -f "./node_modules/.bin/tsc" ]; then
-    ./node_modules/.bin/tsc --noEmit || {
-      echo "❌ Next.js type checking failed"
-      exit 1
-    }
+  ./node_modules/.bin/tsc --noEmit || {
+    echo "❌ Next.js type checking failed"
+    exit 1
+  }
   else
     npx tsc --noEmit || {
       echo "❌ Next.js type checking failed"

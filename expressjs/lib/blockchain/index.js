@@ -18,7 +18,7 @@ const MAIN_ABI = [
   "function getStake(uint256 stakeId) view returns (address, address, uint256, uint256, bool, bool, string memory, uint256, uint256, string memory, uint256)",
   "function getStakesByCreator(address creator) view returns (tuple(address createdBy, address staker, uint256 amount, uint256 timestamp, bool rewarded, bool stakeUp, string cryptoId, uint256 currentPrice, uint256 predictedPrice, string direction, uint256 percentChange)[])",
   "function getStakesByStaker(address staker) view returns (tuple(address createdBy, address staker, uint256 amount, uint256 timestamp, bool rewarded, bool stakeUp, string cryptoId, uint256 currentPrice, uint256 predictedPrice, string direction, uint256 percentChange)[])",
-  "function getStakersByStake(uint256 stakeId) view returns (tuple(uint256 id, address wallet, uint256 amountInBNB, bool stakeUp, bool rewarded)[])",
+  "function getStakersByStake(uint256 stakeId) view returns (tuple(uint256 id, address wallet, uint256 stakeId, uint256 amountInBNB, uint256 createdAt, bool stakeUp, bool rewarded)[])",
   "function getUserStats(address user) view returns (uint256 wins, uint256 losses, uint256 totalStaked, uint256 totalWon, uint256 totalLost, uint256 winRate)",
   "function getCorrectPredictionsByCrypto(string memory cryptoId) view returns (tuple(address createdBy, uint256 createdAt, uint256 expiresAt, uint256 libraryId, bool rewarded, bool predictionCorrect, bool stakeUp, string cryptoId, uint256 currentPrice, uint256 predictedPrice, uint256 actualPrice, string direction, uint256 percentChange)[])",
   "function stakeCount() view returns (uint256)",
@@ -479,10 +479,14 @@ async function getUserStakesWithDetails(userAddress) {
                   } else {
                     amountWei = BigInt(String(amountRaw));
                   }
+                  
+                  console.log(`Stake ${stakeId}, Staker ${staker.id}: amountInBNB raw:`, amountRaw, 'type:', typeof amountRaw, 'amountWei:', amountWei.toString());
                 } catch (err) {
                   console.warn(`Error parsing amount for stake ${stakeId}, staker ${staker.id}:`, err, 'amountInBNB:', staker.amountInBNB, 'type:', typeof staker.amountInBNB);
                   amountWei = BigInt(0);
                 }
+              } else {
+                console.warn(`Stake ${stakeId}, Staker ${staker.id}: amountInBNB is undefined or null`);
               }
               
               const key = `${stakeId}-${staker.stakeUp ? 'up' : 'down'}`;
@@ -533,6 +537,79 @@ async function getUserStakesWithDetails(userAddress) {
     return userStakesList;
   } catch (error) {
     console.error('Error getting user stakes with details:', error);
+    return null;
+  }
+}
+
+/**
+ * Get analytics data
+ */
+async function getAnalytics() {
+  try {
+    const contract = getMainContract();
+    if (!contract) {
+      return null;
+    }
+    
+    const allStakesData = await getAllStakes(false);
+    if (!allStakesData || !allStakesData.stakes) {
+      return {
+        ongoingStakes: 0,
+        resolvedStakes: 0,
+        uniqueStakers: 0,
+        correctPredictions: 0,
+        totalStakes: 0,
+        totalAmountStaked: '0'
+      };
+    }
+    
+    const now = Math.floor(Date.now() / 1000);
+    let ongoingStakes = 0;
+    let resolvedStakes = 0;
+    let uniqueStakers = new Set();
+    let correctPredictions = 0;
+    
+    for (let i = 0; i < allStakesData.stakes.length; i++) {
+      const stake = allStakesData.stakes[i];
+      const stakeId = i + 1;
+      const expiresAtNum = typeof stake.expiresAt === 'string' ? parseInt(stake.expiresAt) : stake.expiresAt;
+      const isExpired = expiresAtNum > 0 && expiresAtNum <= now;
+      const isResolved = stake.rewarded;
+      
+      if (isResolved) {
+        resolvedStakes++;
+        if (stake.predictionCorrect === true) {
+          correctPredictions++;
+        }
+      } else if (!isExpired) {
+        ongoingStakes++;
+      }
+      
+      // Get unique stakers for this stake
+      try {
+        const stakers = await contract.getStakersByStake(stakeId);
+        if (stakers && Array.isArray(stakers)) {
+          stakers.forEach((staker) => {
+            if (staker.wallet) {
+              uniqueStakers.add(staker.wallet.toLowerCase());
+            }
+          });
+        }
+      } catch (err) {
+        console.warn(`Error fetching stakers for stake ${stakeId} in analytics:`, err);
+      }
+    }
+    
+    return {
+      ongoingStakes,
+      resolvedStakes,
+      uniqueStakers: uniqueStakers.size,
+      correctPredictions,
+      totalStakes: allStakesData.stakes.length,
+      totalAmountStaked: allStakesData.totalAmountStaked || '0'
+    };
+  } catch (error) {
+    console.error('Error getting analytics:', error);
     return null;
   }
 }
@@ -610,6 +687,7 @@ module.exports = {
   getUserStakesWithDetails,
   getUserStats,
   getCorrectPredictionsByCrypto,
+  getAnalytics,
   invalidateStakesCache,
   getStakesCacheInfo,
   formatBNB,

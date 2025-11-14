@@ -1,0 +1,16 @@
+export const DEFAULT_STAKE_AMOUNT = '0.01'
+export const MIN_STAKE_AMOUNT = 0.001
+
+export const CACHE_TTL_DEFAULT = 21600000
+export const CACHE_TTL_FILTERED = 86400000
+
+export const REFRESH_INTERVAL = 60000
+
+export const TRANSACTION_TIMEOUT = 120000
+export const RECORD_TIMEOUT = 60000
+export const SUBMISSION_TIMEOUT = 20000
+export const RECEIPT_CHECK_INTERVAL = 1000
+
+export const RETRY_COUNT = 20
+export const RETRY_DELAY = 2000
+

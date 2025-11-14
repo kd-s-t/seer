@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { AppBar, Toolbar, Typography, Button, Chip, Stack, Alert, Box, ToggleButtonGroup, ToggleButton, Menu, MenuItem, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material'
-import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance, ContentCopy, QrCode, CheckCircle, Close } from '@mui/icons-material'
+import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance, ContentCopy, QrCode, CheckCircle, Close, Assessment } from '@mui/icons-material'
 import { useBalance, usePublicClient } from 'wagmi'
 import { useNetwork } from '@/hooks/useNetwork'
 import { localhost } from '@/lib/wagmi'
@@ -133,6 +133,10 @@ export default function Header({
   const isMarketActive = pathname === '/market'
   const isStakingActive = pathname === '/staking'
   const isProfileActive = pathname === '/profile'
+  const isAnalyticsActive = pathname === '/analytics'
+  
+  const ADMIN_ADDRESS = '0x4D3EbC244B5d875F8b284e54e76acBb7Eaf1afAe'
+  const isAdmin = address && address.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
   
   const open = Boolean(anchorEl)
 
@@ -176,6 +180,11 @@ export default function Header({
   const handleStakingClick = () => {
     setLoading(true)
     router.push('/staking')
+  }
+
+  const handleAnalyticsClick = () => {
+    setLoading(true)
+    router.push('/analytics')
   }
 
   const handleProfileMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -314,6 +323,31 @@ export default function Header({
                 >
                   Staking
                 </Button>
+                {isAdmin && (
+                  <Button
+                    color="inherit"
+                    variant={isAnalyticsActive ? "contained" : "text"}
+                    size="small"
+                    startIcon={<Assessment />}
+                    onClick={handleAnalyticsClick}
+                    sx={{ 
+                      minWidth: { xs: 80, sm: 100 },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      ...(isAnalyticsActive ? {
+                        bgcolor: 'rgba(255, 255, 255, 0.2)',
+                        '&:hover': {
+                          bgcolor: 'rgba(255, 255, 255, 0.3)'
+                        }
+                      } : {
+                        '&:hover': {
+                          bgcolor: 'rgba(255, 255, 255, 0.1)'
+                        }
+                      })
+                    }}
+                  >
+                    Analytics
+                  </Button>
+                )}
               </>
             )}
           </Stack>

@@ -37,9 +37,9 @@ import { PREDICTION_STAKING_ABI } from '@/lib/blockchain/predictionStaking'
 import { useContract } from '@/hooks/useContract'
 // import { buyCrypto, sellCrypto } from '@/lib/binance/trading'
 import { useCurrency } from '@/contexts/CurrencyContext'
-
-type SortOption = 'price' | 'symbol' | 'name' | 'ai' | ''
-type SortDirection = 'asc' | 'desc'
+import { type SortOption, type SortDirection } from '../types'
+import { formatPercent as formatPercentUtil, formatLastFetchTime as formatLastFetchTimeUtil, sortCryptos as sortCryptosUtil, getCacheKey as getCacheKeyUtil } from '../utils'
+import { CACHE_TTL_DEFAULT, CACHE_TTL_FILTERED } from '../const'
 
 export default function CryptoTable() {
   const router = useRouter()
@@ -386,9 +386,8 @@ export default function CryptoTable() {
         try {
           const { data, timestamp } = JSON.parse(cachedData)
           const cacheAge = Date.now() - timestamp
-          const CACHE_TTL = 21600000
           
-          if (cacheAge < CACHE_TTL && data && data.length > 0) {
+          if (cacheAge < CACHE_TTL_DEFAULT && data && data.length > 0) {
             setUsdCryptos(data)
             setLoading(false)
           } else {
@@ -402,9 +401,7 @@ export default function CryptoTable() {
   }, [])
 
   const fetchCryptoData = async (showLoading = true, forceRefresh = false, tags?: string[]) => {
-    const cacheKey = tags && tags.length > 0 
-      ? `crypto_prices_cache_${tags.sort().join(',')}` 
-      : 'crypto_prices_cache'
+    const cacheKey = getCacheKeyUtil(tags)
     
     if (forceRefresh) {
       // Clear cache for this specific key on force refresh
@@ -417,9 +414,8 @@ export default function CryptoTable() {
         try {
           const { data, timestamp } = JSON.parse(cachedData)
           const cacheAge = Date.now() - timestamp
-          const CACHE_TTL = 86400000
           
-          if (cacheAge < CACHE_TTL) {
+          if (cacheAge < CACHE_TTL_FILTERED) {
             setUsdCryptos(data)
             if (showLoading) {
               setLoading(false)
@@ -476,18 +472,6 @@ export default function CryptoTable() {
     fetchCryptoData(false, true, tags)
   }
 
-  const formatLastFetchTime = (date: Date | null) => {
-    if (!date) return 'Never'
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const seconds = Math.floor(diff / 1000)
-    const minutes = Math.floor(seconds / 60)
-    
-    if (seconds < 10) return 'Just now'
-    if (seconds < 60) return `${seconds}s ago`
-    if (minutes < 60) return `${minutes}m ago`
-    return date.toLocaleTimeString()
-  }
 
   useEffect(() => {
     if (!mounted) return
@@ -517,11 +501,6 @@ export default function CryptoTable() {
 
   const handleCryptoSelect = (values: CryptoLibraryItem[]) => {
     setSelectedCryptos(values)
-  }
-
-  const formatPercent = (percent: number) => {
-    const sign = percent >= 0 ? '+' : ''
-    return `${sign}${percent.toFixed(2)}%`
   }
 
   // const handleBuy = async (crypto: CryptoPrice) => {
@@ -590,34 +569,7 @@ export default function CryptoTable() {
   }
 
   const sortedCryptos = useMemo(() => {
-    let sorted = [...cryptos]
-
-    if (sortBy) {
-      sorted.sort((a, b) => {
-        let comparison = 0
-        switch (sortBy) {
-          case 'price':
-            comparison = b.price - a.price
-            break
-          case 'symbol':
-            comparison = a.symbol.localeCompare(b.symbol)
-            break
-          case 'name':
-            comparison = a.name.localeCompare(b.name)
-            break
-          case 'ai':
-            const aSuggestion = a.suggestionPercent ?? 0
-            const bSuggestion = b.suggestionPercent ?? 0
-            comparison = Math.abs(bSuggestion) - Math.abs(aSuggestion)
-            break
-          default:
-            return 0
-        }
-        return sortDirection === 'asc' ? -comparison : comparison
-      })
-    }
-
-    return sorted
+    return sortCryptosUtil(cryptos, sortBy, sortDirection)
   }, [cryptos, sortBy, sortDirection])
 
   if (!mounted) {
@@ -825,7 +777,7 @@ export default function CryptoTable() {
           </Button>
           {lastFetchTime && (
             <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.75rem' }}>
-              Last updated: {formatLastFetchTime(lastFetchTime)}
+              Last updated: {formatLastFetchTimeUtil(lastFetchTime)}
             </Typography>
           )}
         </Box>
@@ -964,7 +916,7 @@ export default function CryptoTable() {
                         fontWeight: 'medium'
                       }}
                     >
-                      {formatPercent(crypto.change24h)}
+                      {formatPercentUtil(crypto.change24h)}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -1019,7 +971,7 @@ export default function CryptoTable() {
                       if (crypto.suggestion && typeof suggestionPercent === 'number') {
                         return (
                           <Chip
-                            label={`${crypto.suggestion === 'up' ? '↑' : '↓'} ${formatPercent(suggestionPercent)}`}
+                            label={`${crypto.suggestion === 'up' ? '↑' : '↓'} ${formatPercentUtil(suggestionPercent)}`}
                             color={crypto.suggestion === 'up' ? 'success' : 'error'}
                             size="small"
                           />

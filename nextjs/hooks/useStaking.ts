@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, usePublicClient, useReadContract, useAccount } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+import { parseEther, formatEther, decodeEventLog } from 'viem'
 import { PREDICTION_STAKING_ABI } from '@/lib/blockchain/predictionStaking'
 import { useContract } from './useContract'
 import { getStakeablePredictions } from '@/lib/seery'
@@ -123,17 +123,37 @@ export function useStaking() {
       throw new Error('Wallet not connected')
     }
 
-    const userBalance = await publicClient.getBalance({
-      address: stakerAddress as `0x${string}`
+    const parsedAmount = parseEther(amountInBNB)
+    console.log('Staking amount:', { 
+      amountInBNB, 
+      parsedAmount: parsedAmount.toString(), 
+      parsedAmountHex: parsedAmount.toString(16),
+      parsedAmountType: typeof parsedAmount,
+      expectedFor3BNB: '3000000000000000000',
+      isCorrect: parsedAmount.toString() === '3000000000000000000' ? 'YES' : 'NO - BUG!'
     })
     
-    const parsedAmount = parseEther(amountInBNB)
-    
-    // Check if user has sufficient balance (with small buffer for gas)
-    const gasBuffer = parseEther('0.001') // Small buffer for gas fees
-    if (userBalance < parsedAmount + gasBuffer) {
-      const balanceFormatted = formatEther(userBalance)
-      throw new Error(`Insufficient funds. You have ${parseFloat(balanceFormatted).toFixed(4)} BNB, but need ${parseFloat(amountInBNB).toFixed(4)} BNB plus gas fees.`)
+    // Try to check balance, but don't block if it times out
+    try {
+      const userBalance = await Promise.race([
+        publicClient.getBalance({
+          address: stakerAddress as `0x${string}`
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Balance check timeout')), 5000)
+        )
+      ]) as bigint
+      
+      // Check if user has sufficient balance (with small buffer for gas)
+      const gasBuffer = parseEther('0.001') // Small buffer for gas fees
+      if (userBalance < parsedAmount + gasBuffer) {
+        const balanceFormatted = formatEther(userBalance)
+        throw new Error(`Insufficient funds. You have ${parseFloat(balanceFormatted).toFixed(4)} BNB, but need ${parseFloat(amountInBNB).toFixed(4)} BNB plus gas fees.`)
+      }
+    } catch (balanceError: any) {
+      // If balance check fails (timeout, network error, etc.), log warning but continue
+      // The transaction will fail on-chain if there's insufficient balance anyway
+      console.warn('Balance check failed (will proceed anyway):', balanceError.message)
     }
 
     // Set lock before sending transaction (only after balance check passes)
@@ -146,6 +166,24 @@ export function useStaking() {
       const percentChangeScaled = BigInt(Math.floor(Math.abs(percentChange) * 100))
       
       const libraryIdBigInt = libraryId ? BigInt(libraryId) : BigInt(0)
+      
+      console.log('About to send transaction:', {
+        value: parsedAmount.toString(),
+        valueType: typeof parsedAmount,
+        valueHex: parsedAmount.toString(16),
+        amountInBNB,
+        'CHECK': parsedAmount.toString() === '3000000000000000000' ? '✅ Correct (3 BNB)' : `❌ WRONG! Expected 3000000000000000000, got ${parsedAmount.toString()}`
+      })
+      
+      // parseEther already returns a BigInt, so we can use it directly
+      const transactionValue = parsedAmount
+      
+      console.log('Final transaction value check:', {
+        original: String(parsedAmount),
+        final: String(transactionValue),
+        areEqual: String(parsedAmount) === String(transactionValue),
+        type: typeof transactionValue
+      })
       
       writeContract({
         address: predictionStakingAddress as `0x${string}`,
@@ -160,7 +198,7 @@ export function useStaking() {
           stakeUp,
           libraryIdBigInt // libraryId: 0 means not linked to a library entry, otherwise links to library
         ],
-        value: parsedAmount
+        value: transactionValue
       })
       
       // Wait for transaction hash to be set (wagmi is async)
@@ -240,9 +278,54 @@ export function useStaking() {
       const txReceipt = receipt || manualReceipt
       if (txReceipt?.status === 'success' || txReceipt?.status === 1 || (txReceipt && !txReceipt.status)) {
         console.log('Response: Stake transaction succeeded')
+        
+        // Check the transaction value that was actually sent
+        if (publicClient && hash) {
+          Promise.all([
+            publicClient.getTransaction({ hash }),
+            publicClient.getTransactionReceipt({ hash }).catch(() => null)
+          ]).then(([tx, receipt]) => {
+            console.log('Transaction details:', {
+              value: tx.value?.toString(),
+              valueHex: tx.value?.toString(16),
+              valueInBNB: tx.value ? formatEther(tx.value).toString() : 'N/A',
+              'CHECK': tx.value ? `✅ Transaction sent with ${formatEther(tx.value)} BNB` : '❌ No value in transaction'
+            })
+            
+            // Decode StakerJoined event to see what value the contract received
+            if (receipt && receipt.logs) {
+              try {
+                receipt.logs.forEach((log) => {
+                  try {
+                    const decoded = decodeEventLog({
+                      abi: PREDICTION_STAKING_ABI,
+                      data: log.data,
+                      topics: log.topics as any
+                    })
+                    if (decoded.eventName === 'StakerJoined') {
+                      const amount = decoded.args.amount as bigint
+                      console.log('StakerJoined event:', {
+                        stakerId: decoded.args.stakerId?.toString(),
+                        stakeId: decoded.args.stakeId?.toString(),
+                        wallet: decoded.args.wallet,
+                        amount: amount?.toString(),
+                        amountInBNB: amount ? formatEther(amount).toString() : 'N/A',
+                        'EVENT_CHECK': amount ? `Contract received: ${formatEther(amount)} BNB` : '❌ No amount in event'
+                      })
+                    }
+                  } catch (e) {
+                    // Not a StakerJoined event, ignore
+                  }
+                })
+              } catch (err) {
+                console.warn('Could not decode events:', err)
+              }
+            }
+          }).catch(err => console.warn('Could not fetch transaction details:', err))
+        }
       }
     }
-  }, [receipt, manualReceipt])
+  }, [receipt, manualReceipt, hash, publicClient])
 
   return {
     stakeOnCrypto,
@@ -418,10 +501,10 @@ export function useStakeablePredictions() {
             direction: stake.direction,
             percentChange: stake.percentChange.toString(),
             expiresAt: stake.expiresAt,
-            totalStakedUp: formatEther(stake.totalStakedUp),
-            totalStakedDown: formatEther(stake.totalStakedDown),
-            userStakeUp: formatEther(userStake.userStakeUp),
-            userStakeDown: formatEther(userStake.userStakeDown)
+            totalStakedUp: formatEther(BigInt(stake.totalStakedUp || '0')),
+            totalStakedDown: formatEther(BigInt(stake.totalStakedDown || '0')),
+            userStakeUp: formatEther(BigInt(userStake.userStakeUp || '0')),
+            userStakeDown: formatEther(BigInt(userStake.userStakeDown || '0'))
           }
         })
         

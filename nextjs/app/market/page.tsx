@@ -8,7 +8,7 @@ import { SnackbarState } from '@/types'
 import Header from '@/components/Header'
 import MetaMaskWarning from '@/components/MetaMaskWarning'
 import NotificationSnackbar from '@/components/NotificationSnackbar'
-import CryptoTable from '@/components/CryptoTable'
+import { CryptoTable } from '@/modules/market'
 
 export default function MarketPage() {
   const router = useRouter()

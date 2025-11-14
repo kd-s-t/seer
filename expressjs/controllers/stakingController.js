@@ -199,6 +199,34 @@ const getUserStakes = async (req, res) => {
   }
 };
 
+const getAnalytics = async (req, res) => {
+  try {
+    const blockchain = require('../lib/blockchain');
+    const analytics = await blockchain.getAnalytics();
+    
+    if (analytics === null) {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch analytics from blockchain',
+        analytics: null
+      });
+    }
+    
+    res.json({
+      success: true,
+      analytics: analytics,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting analytics:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get analytics',
+      analytics: null
+    });
+  }
+};
+
 // Deprecated: Blockchain interactions moved to frontend
 const getClaimablePredictions = async (req, res) => {
   try {
@@ -230,5 +258,6 @@ module.exports = {
   getUserStats,
   getUserStakes,
   getClaimablePredictions,
-  createPredictionAndRegister
+  createPredictionAndRegister,
+  getAnalytics
 };

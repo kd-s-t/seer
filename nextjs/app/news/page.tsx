@@ -2,7 +2,7 @@
 
 import { Box, Container } from '@mui/material'
 import Header from '@/components/Header'
-import Homepage from '@/components/Homepage'
+import { NewsFeed } from '@/modules/news'
 import { useWallet, useMetaMask } from '@/hooks'
 import MetaMaskWarning from '@/components/MetaMaskWarning'
 import NotificationSnackbar from '@/components/NotificationSnackbar'
@@ -65,7 +65,7 @@ export default function NewsPage() {
           onDisconnect={handleDisconnect}
         />
 
-        <Homepage />
+        <NewsFeed />
 
         <NotificationSnackbar
           snackbar={snackbar}
