@@ -1,9 +1,7 @@
 const { ethers } = require('ethers');
 require('dotenv').config();
 
-// BNB Chain configuration
-const BNB_TESTNET_RPC = process.env.BNB_TESTNET_RPC;
-const BNB_MAINNET_RPC = process.env.BNB_MAINNET_RPC;
+// BNB Chain configuration - use BLOCKCHAIN_RPC for all networks
 const RPC = process.env.BLOCKCHAIN_RPC;
 const NETWORK = process.env.BLOCKCHAIN_NETWORK || process.env.NETWORK;
 // Main contract address (combines Library + Stakes functionality)
@@ -40,20 +38,11 @@ let wallet;
  */
 function initBlockchain(network = NETWORK) {
   try {
-    let rpcUrl;
-    if (network === 'localhost' || network === 'local') {
-      rpcUrl = RPC;
-    } else if (network === 'mainnet') {
-      rpcUrl = BNB_MAINNET_RPC || RPC;
-    } else {
-      rpcUrl = BNB_TESTNET_RPC || RPC;
+    if (!RPC) {
+      throw new Error('No RPC URL configured. Set BLOCKCHAIN_RPC in environment variables');
     }
     
-    if (!rpcUrl) {
-      throw new Error('No RPC URL configured. Set BNB_TESTNET_RPC, BNB_MAINNET_RPC, or BLOCKCHAIN_RPC');
-    }
-    
-    provider = new ethers.JsonRpcProvider(rpcUrl);
+    provider = new ethers.JsonRpcProvider(RPC);
     
     if (MAIN_CONTRACT_ADDRESS) {
       mainContract = new ethers.Contract(MAIN_CONTRACT_ADDRESS, MAIN_ABI, provider);
