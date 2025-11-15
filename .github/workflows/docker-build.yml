@@ -89,7 +89,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --parameters "{\"commands\":[\"cd /home/ec2-user/seer\",\"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY\",\"docker-compose pull\",\"docker-compose up -d\"]}" \
+            --parameters "{\"commands\":[\"cd /home/ec2-user/seer\",\"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY\",\"docker-compose pull\",\"docker-compose up -d\",\"sleep 10\",\"docker-compose ps\",\"sudo systemctl reload nginx || sudo systemctl restart nginx\",\"curl -f http://localhost:3015 > /dev/null 2>&1 && echo 'Next.js is responding' || echo 'Next.js not responding'\",\"curl -f http://localhost:3016/health > /dev/null 2>&1 && echo 'Express.js is responding' || echo 'Express.js not responding'\"]}" \
             --output text \
             --query "Command.CommandId")
           

@@ -164,13 +164,29 @@ chmod 600 /home/ec2-user/seer/.env
 
 # Configure Nginx reverse proxy (HTTP - will be upgraded to HTTPS by certbot)
 cat > /etc/nginx/conf.d/seery.conf <<'NGINXEOF'
+# Upstream definitions
+upstream nextjs {
+    server localhost:3015;
+    keepalive 32;
+}
+
+upstream expressjs {
+    server localhost:3016;
+    keepalive 32;
+}
+
 server {
     listen 80;
     server_name theseery.com www.theseery.com;
 
+    # Increase timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+
     # Frontend (Next.js)
     location / {
-        proxy_pass http://localhost:3015;
+        proxy_pass http://nextjs;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -179,16 +195,25 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
     }
 
     # Backend API (Express.js)
     location /api {
-        proxy_pass http://localhost:3016;
+        proxy_pass http://expressjs;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
     }
 }
 
@@ -197,9 +222,14 @@ server {
     listen 80 default_server;
     server_name _;
 
+    # Increase timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+
     # Frontend (Next.js)
     location / {
-        proxy_pass http://localhost:3015;
+        proxy_pass http://nextjs;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -208,25 +238,39 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
     }
 
     # Backend API (Express.js)
     location /api {
-        proxy_pass http://localhost:3016;
+        proxy_pass http://expressjs;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
     }
 }
 NGINXEOF
 
-# Start Nginx
-systemctl start nginx
+# Test and start Nginx
+nginx -t && systemctl start nginx
+systemctl enable nginx
 
 # Wait for services to be ready before requesting SSL certificate
 sleep 30
+
+# Verify services are running
+systemctl status nginx --no-pager || echo "Nginx failed to start"
+docker ps || echo "Docker containers not running"
 
 # Request SSL certificate from Let's Encrypt (non-interactive)
 certbot --nginx -d theseery.com -d www.theseery.com --non-interactive --agree-tos --email admin@theseery.com --redirect || echo "SSL certificate setup failed - will need to run manually after DNS propagates"
@@ -234,10 +278,32 @@ certbot --nginx -d theseery.com -d www.theseery.com --non-interactive --agree-to
 # Build and start services (run as ec2-user)
 sudo -u ec2-user bash <<'USERSCRIPT'
 cd /home/ec2-user/seer
-docker-compose build
+docker-compose pull || echo "Failed to pull images, will build instead"
+docker-compose build || echo "Build failed, using existing images"
 docker-compose up -d
+
+# Wait for services to start
+sleep 10
+
+# Check if services are running
+docker-compose ps
+
+# Verify services are responding
+for i in {1..30}; do
+    if curl -f http://localhost:3015 > /dev/null 2>&1 && curl -f http://localhost:3016/health > /dev/null 2>&1; then
+        echo "Services are responding"
+        break
+    fi
+    echo "Waiting for services to start... ($i/30)"
+    sleep 2
+done
 USERSCRIPT
+
+# Reload nginx to pick up any changes
+systemctl reload nginx || systemctl restart nginx
 
 # Log completion
 echo "Seer deployment completed at $(date)" >> /var/log/seer-deployment.log
+echo "Next.js status: $(curl -s -o /dev/null -w '%{http_code}' http://localhost:3015 || echo 'not responding')" >> /var/log/seer-deployment.log
+echo "Express.js status: $(curl -s -o /dev/null -w '%{http_code}' http://localhost:3016/health || echo 'not responding')" >> /var/log/seer-deployment.log
 
