@@ -11,7 +11,9 @@ const allowedOrigins = [
   'https://theseery.com',
   'http://theseery.com',
   'https://www.theseery.com',
-  'http://www.theseery.com'
+  'http://www.theseery.com',
+  'http://54.87.228.171',
+  'http://54.87.228.171:3015'
 ].filter(Boolean);
 
 app.use(cors({
