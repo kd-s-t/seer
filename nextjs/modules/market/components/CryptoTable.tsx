@@ -1147,7 +1147,7 @@ export default function CryptoTable() {
                   setStakeFieldError(null)
                 }}
                 fullWidth
-                inputProps={{ min: '0.001', step: '0.001' }}
+                inputProps={{ min: '0.00001', step: '0.00001' }}
                 error={!!(stakeError || stakeFieldError)}
                 helperText={
                   (() => {
@@ -1189,8 +1189,8 @@ export default function CryptoTable() {
                 return
               }
               
-              if (!stakeAmount || parseFloat(stakeAmount) < 0.001) {
-                setStakeFieldError('Please enter a valid stake amount (minimum 0.001 BNB)')
+              if (!stakeAmount || parseFloat(stakeAmount) < 0.00001) {
+                setStakeFieldError('Please enter a valid stake amount (minimum 0.00001 BNB)')
                 return
               }
 
@@ -1236,7 +1236,7 @@ export default function CryptoTable() {
                   setStakeFieldError(errorMsg)
               }
             }}
-            disabled={isPending || isConfirming || creatingPrediction || isRecordingPrediction || isWaitingRecord || !stakeAmount || parseFloat(stakeAmount) < 0.001}
+            disabled={isPending || isConfirming || creatingPrediction || isRecordingPrediction || isWaitingRecord || !stakeAmount || parseFloat(stakeAmount) < 0.00001}
             startIcon={(isPending || isConfirming || creatingPrediction || isRecordingPrediction || isWaitingRecord) ? <CircularProgress size={16} /> : undefined}
           >
             {creatingPrediction || isRecordingPrediction || isWaitingRecord ? 'Creating prediction...' : isPending ? 'Confirming...' : isConfirming ? 'Processing...' : 'Stake BNB'}

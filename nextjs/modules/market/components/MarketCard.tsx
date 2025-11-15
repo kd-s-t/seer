@@ -110,7 +110,7 @@ export default function MarketCard({ market, userAddress, onPlaceBet, isPlacingB
                     value={betAmount}
                     onChange={(e) => setBetAmount(e.target.value)}
                     placeholder="0.01"
-                    inputProps={{ step: 0.001, min: 0.001 }}
+                    inputProps={{ step: 0.00001, min: 0.00001 }}
                     sx={{ flex: 1 }}
                   />
                   <Button

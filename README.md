@@ -140,7 +140,7 @@ This starts both frontend and backend services.
 2. Browse available stakeable predictions
 3. Select a prediction and click "Stake"
 4. Choose direction (Up or Down)
-5. Enter stake amount (minimum 0.001 BNB)
+5. Enter stake amount (minimum 0.00001 BNB)
 6. Confirm transaction in MetaMask
 7. Your stake is recorded on-chain
 

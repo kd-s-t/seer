@@ -159,8 +159,8 @@ export default function StakingPage() {
   const handleStake = async () => {
     if (!selectedPrediction) return
     
-    if (!stakeAmount || parseFloat(stakeAmount) < 0.001) {
-      setStakeFieldError('Please enter a valid stake amount (minimum 0.001 BNB)')
+    if (!stakeAmount || parseFloat(stakeAmount) < 0.00001) {
+      setStakeFieldError('Please enter a valid stake amount (minimum 0.00001 BNB)')
       return
     }
 
@@ -585,9 +585,9 @@ export default function StakingPage() {
                     setStakeFieldError(null)
                   }}
                   fullWidth
-                  inputProps={{ min: '0.001', step: '0.001' }}
+                  inputProps={{ min: '0.00001', step: '0.00001' }}
                   error={!!stakeFieldError}
-                  helperText={stakeFieldError || 'Minimum stake: 0.001 BNB'}
+                  helperText={stakeFieldError || 'Minimum stake: 0.00001 BNB'}
                 />
                 {isConfirmed && (
                   <Alert severity="success">
@@ -613,7 +613,7 @@ export default function StakingPage() {
             <Button
               variant="contained"
               onClick={handleStake}
-              disabled={isPending || isConfirming || !stakeAmount || parseFloat(stakeAmount) < 0.001}
+              disabled={isPending || isConfirming || !stakeAmount || parseFloat(stakeAmount) < 0.00001}
               startIcon={(isPending || isConfirming) ? <CircularProgress size={16} /> : null}
             >
               {isPending ? 'Confirming...' : isConfirming ? 'Processing...' : 'Stake BNB'}

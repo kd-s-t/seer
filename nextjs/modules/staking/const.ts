@@ -1,5 +1,5 @@
 export const DEFAULT_STAKE_AMOUNT = '0.01'
-export const MIN_STAKE_AMOUNT = 0.001
+export const MIN_STAKE_AMOUNT = 0.00001
 export const TRANSACTION_TIMEOUT = 120000
 export const REFETCH_DELAY = 3000
 

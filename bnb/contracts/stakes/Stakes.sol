@@ -35,7 +35,7 @@ contract Stakes {
     mapping(uint256 => Staker) public stakers;
     mapping(uint256 => uint256[]) public stakeStakers; // stakeId -> array of staker IDs
     
-    uint256 public constant MIN_STAKE = 0.001 ether;
+    uint256 public constant MIN_STAKE = 0.00001 ether;
     uint256 public constant STAKE_EXPIRY_WINDOW = 48 hours;
     
     event StakePlaced(

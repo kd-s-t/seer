@@ -1,5 +1,5 @@
 export const DEFAULT_STAKE_AMOUNT = '0.01'
-export const MIN_STAKE_AMOUNT = 0.001
+export const MIN_STAKE_AMOUNT = 0.00001
 
 export const CACHE_TTL_DEFAULT = 21600000
 export const CACHE_TTL_FILTERED = 86400000
