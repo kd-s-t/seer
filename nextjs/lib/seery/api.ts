@@ -1,13 +1,4 @@
 function getApiBaseUrl(): string {
-  const allEnv = process.env
-  const publicEnv = Object.keys(allEnv)
-    .filter(key => key.startsWith('NEXT_PUBLIC_'))
-    .reduce((obj, key) => {
-      obj[key] = allEnv[key]
-      return obj
-    }, {} as Record<string, string | undefined>)
-  console.log('All NEXT_PUBLIC_* env vars:', publicEnv)
-  console.log('All process.env:', allEnv)
   const envValue = process.env.NEXT_PUBLIC_SEERY_BACKEND_DOMAIN || ''
   console.log('NEXT_PUBLIC_SEERY_BACKEND_DOMAIN:', envValue)
   
