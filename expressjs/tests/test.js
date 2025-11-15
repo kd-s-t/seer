@@ -5,10 +5,24 @@ const openai = require('../lib/openai');
 function testDatabase() {
   console.log('🧪 Testing Database Operations...\n');
   
+  // Use a unique test market ID to avoid conflicts
+  const testMarketId = Math.floor(Date.now() / 1000);
+  
   try {
+    // Clean up any existing test data with this ID (in case of retry)
+    try {
+      const existingMarket = db.markets.get(testMarketId);
+      if (existingMarket) {
+        db.db.prepare('DELETE FROM bets WHERE market_id = ?').run(testMarketId);
+        db.db.prepare('DELETE FROM markets WHERE market_id = ?').run(testMarketId);
+      }
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
+    
     // Test market creation
     const marketData = {
-      marketId: 1,
+      marketId: testMarketId,
       creatorAddress: '0x1234567890123456789012345678901234567890',
       question: 'Will Bitcoin reach $100k by end of 2024?',
       outcomes: ['Yes', 'No'],
@@ -19,7 +33,7 @@ function testDatabase() {
     console.log('✅ Market created successfully');
     
     // Test market retrieval
-    const market = db.markets.get(1);
+    const market = db.markets.get(testMarketId);
     if (market && market.question === marketData.question) {
       console.log('✅ Market retrieved successfully');
     } else {
@@ -28,7 +42,7 @@ function testDatabase() {
     
     // Test bet creation
     const betData = {
-      marketId: 1,
+      marketId: testMarketId,
       userAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
       outcome: 0,
       amount: 0.1
@@ -38,7 +52,7 @@ function testDatabase() {
     console.log('✅ Bet created successfully');
     
     // Test bet retrieval
-    const bets = db.bets.getMarketBets(1);
+    const bets = db.bets.getMarketBets(testMarketId);
     if (bets.length > 0) {
       console.log('✅ Bets retrieved successfully');
     } else {
@@ -46,7 +60,7 @@ function testDatabase() {
     }
     
     // Test outcome total
-    const total = db.bets.getOutcomeTotal(1, 0);
+    const total = db.bets.getOutcomeTotal(testMarketId, 0);
     if (total === 0.1) {
       console.log('✅ Outcome total calculated correctly');
     } else {
@@ -54,8 +68,8 @@ function testDatabase() {
     }
     
     // Test market resolution
-    db.markets.resolve(1, 0);
-    const resolvedMarket = db.markets.get(1);
+    db.markets.resolve(testMarketId, 0);
+    const resolvedMarket = db.markets.get(testMarketId);
     if (resolvedMarket.resolved && resolvedMarket.winning_outcome === 0) {
       console.log('✅ Market resolved successfully');
     } else {
@@ -63,8 +77,25 @@ function testDatabase() {
     }
     
     console.log('\n✅ All database tests passed!\n');
+    
+    // Clean up test data
+    try {
+      db.db.prepare('DELETE FROM bets WHERE market_id = ?').run(testMarketId);
+      db.db.prepare('DELETE FROM markets WHERE market_id = ?').run(testMarketId);
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
+    
     return true;
   } catch (error) {
+    // Clean up test data on error
+    try {
+      db.db.prepare('DELETE FROM bets WHERE market_id = ?').run(testMarketId);
+      db.db.prepare('DELETE FROM markets WHERE market_id = ?').run(testMarketId);
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
+    
     console.error('❌ Database test failed:', error.message);
     return false;
   }

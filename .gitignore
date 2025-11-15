@@ -56,3 +56,9 @@ docker-compose.override.yml
 
 # OS
 Thumbs.db
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+expressjs/prediction_market.db
