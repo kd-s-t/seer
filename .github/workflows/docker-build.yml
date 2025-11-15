@@ -110,4 +110,3 @@ jobs:
             --instance-id "$INSTANCE_ID" \
             --query '[Status,StandardOutputContent,StandardErrorContent]' \
             --output table
-
