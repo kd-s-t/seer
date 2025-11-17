@@ -121,6 +121,16 @@ export const PREDICTION_STAKING_ABI = [
     }]
   },
   {
+    name: 'getTotalStakedOnStake',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'stakeId', type: 'uint256' }],
+    outputs: [
+      { name: 'totalUp', type: 'uint256' },
+      { name: 'totalDown', type: 'uint256' }
+    ]
+  },
+  {
     name: 'stakeCount',
     type: 'function',
     stateMutability: 'view',

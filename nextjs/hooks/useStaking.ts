@@ -443,6 +443,7 @@ export function useStakeablePredictions() {
           
           // Get stakers for this stake to calculate totals and user stakes
           try {
+            // Try to get detailed staker list first (for user stakes)
             const stakers = await publicClient.readContract({
               address: predictionStakingAddress as `0x${string}`,
               abi: PREDICTION_STAKING_ABI,
@@ -452,8 +453,14 @@ export function useStakeablePredictions() {
             
             if (cancelledRef?.current) return
             
-            if (stakers && Array.isArray(stakers)) {
+            if (stakers && Array.isArray(stakers) && stakers.length > 0) {
               stakers.forEach((staker: any) => {
+                // Validate staker data
+                if (!staker || !staker.amountInBNB) {
+                  console.warn(`Invalid staker data for stake ${stakeId}:`, staker)
+                  return
+                }
+                
                 // Calculate totals
                 if (staker.stakeUp) {
                   totalStakedUp = (BigInt(totalStakedUp) + BigInt(staker.amountInBNB)).toString()
@@ -470,8 +477,46 @@ export function useStakeablePredictions() {
                   }
                 }
               })
+            } else {
+              // No stakers found - try fallback to getTotalStakedOnStake for totals only
+              try {
+                const totals = await publicClient.readContract({
+                  address: predictionStakingAddress as `0x${string}`,
+                  abi: PREDICTION_STAKING_ABI,
+                  functionName: 'getTotalStakedOnStake',
+                  args: [BigInt(stakeId)]
+                }) as unknown as [bigint, bigint]
+                
+                if (totals && Array.isArray(totals) && totals.length >= 2) {
+                  totalStakedUp = totals[0].toString()
+                  totalStakedDown = totals[1].toString()
+                  console.log(`Used getTotalStakedOnStake fallback for stake ${stakeId}: up=${totalStakedUp}, down=${totalStakedDown}`)
+                }
+              } catch (fallbackErr: any) {
+                console.warn(`Fallback getTotalStakedOnStake also failed for stake ${stakeId}:`, fallbackErr.message)
+              }
             }
-          } catch (err) {
+          } catch (err: any) {
+            console.error(`Failed to get stakers for stake ${stakeId} (cryptoId: ${cryptoId}):`, err.message || err)
+            
+            // Fallback: Try getTotalStakedOnStake if getStakersByStake fails
+            try {
+              const totals = await publicClient.readContract({
+                address: predictionStakingAddress as `0x${string}`,
+                abi: PREDICTION_STAKING_ABI,
+                functionName: 'getTotalStakedOnStake',
+                args: [BigInt(stakeId)]
+              }) as unknown as [bigint, bigint]
+              
+              if (totals && Array.isArray(totals) && totals.length >= 2) {
+                totalStakedUp = totals[0].toString()
+                totalStakedDown = totals[1].toString()
+                console.log(`Used getTotalStakedOnStake fallback after error for stake ${stakeId}: up=${totalStakedUp}, down=${totalStakedDown}`)
+              }
+            } catch (fallbackErr: any) {
+              console.error(`Both getStakersByStake and getTotalStakedOnStake failed for stake ${stakeId}:`, fallbackErr.message)
+              // Continue with zero values - stake might be new or contract call failed
+            }
           }
           
           // Create a separate prediction entry for each stake
