@@ -13,6 +13,7 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { useAppSelector, useAppDispatch } from '@/lib/store/hooks'
 import { fetchBnbPrice, shouldFetchPrice } from '@/lib/store/slices/priceSlice'
 import { store } from '@/lib/store'
+import { ADMIN_ADDRESSES } from '@/modules/analytics/const'
 
 interface HeaderProps {
   address: string | undefined
@@ -135,8 +136,7 @@ export default function Header({
   const isProfileActive = pathname === '/profile'
   const isAnalyticsActive = pathname === '/analytics'
 
-  const ADMIN_ADDRESS = '0x4D3EbC244B5d875F8b284e54e76acBb7Eaf1afAe'
-  const isAdmin = address && address.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
+  const isAdmin = address ? ADMIN_ADDRESSES.some(addr => addr.toLowerCase() === address.toLowerCase()) : false
 
   const open = Boolean(anchorEl)
 

@@ -34,6 +34,11 @@
 - **User Profile**: Track wins, losses, net profit, and win rate
 - **Admin Analytics**: Dashboard showing ongoing stakes, resolved stakes, unique stakers, and accuracy metrics
 
+**Future Features:**
+- **Buy and Sell**: Direct cryptocurrency trading functionality within the platform
+- **Enhanced News Integration**: Multiple news APIs will be integrated to provide richer data feeds for OpenAI analysis, improving prediction accuracy and market context
+- **Domain Separation**: Separate domains for mainnet and testnet deployments (mainnet.theseery.com and testnet.theseery.com)
+
 ---  
 
 <div align="center"> 

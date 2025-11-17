@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { getAnalytics } from '@/lib/seery/analytics'
 import { type AnalyticsData } from './types'
-import { ADMIN_ADDRESS, REFRESH_INTERVAL } from './const'
+import { ADMIN_ADDRESSES, REFRESH_INTERVAL } from './const'
 
 export function useAnalytics() {
   const [mounted, setMounted] = useState(false)
@@ -21,7 +21,8 @@ export function useAnalytics() {
     let cancelled = false
 
     const fetchAnalytics = async () => {
-      if (!wagmiAddress || wagmiAddress.toLowerCase() !== ADMIN_ADDRESS.toLowerCase()) {
+      const isAdmin = wagmiAddress && ADMIN_ADDRESSES.some(addr => addr.toLowerCase() === wagmiAddress.toLowerCase())
+      if (!wagmiAddress || !isAdmin) {
         if (!cancelled) {
           setLoading(false)
         }
@@ -65,7 +66,7 @@ export function useAnalytics() {
     }
   }, [mounted, wagmiAddress])
 
-  const isAdmin = wagmiAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
+  const isAdmin = wagmiAddress ? ADMIN_ADDRESSES.some(addr => addr.toLowerCase() === wagmiAddress.toLowerCase()) : false
 
   return { analytics, loading, error, mounted, isAdmin }
 }
