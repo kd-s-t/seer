@@ -11,30 +11,22 @@ npm install
 
 **2. Set up environment variables:**
 
-Create a `.env` file in the `expressjs/` folder:
-```env
-OPENAI_API_KEY=your-openai-api-key-here
-PORT=3016
+Create a `.env` file in the `expressjs/` folder by copying `.env.example`:
 
-# Blockchain Configuration
-BLOCKCHAIN_NETWORK=testnet  # or 'mainnet' (also accepts NETWORK as fallback)
-BNB_TESTNET_RPC=https://data-seed-prebsc-1-s1.binance.org:8545
-BNB_MAINNET_RPC=https://bsc-dataseed.binance.org/
-BLOCKCHAIN_RPC=https://data-seed-prebsc-1-s1.binance.org:8545  # Optional, used for localhost/local network
-
-# Contract Address (use one of these - checked in order):
-BLOCKCHAIN_CONTRACT_ADDRESS=0x...  # Primary (recommended)
-# OR MAIN_CONTRACT_ADDRESS=0x...
-# OR PREDICTION_STAKING_ADDRESS=0x...
-# OR CONTRACT_ADDRESS=0x...  # Fallback for compatibility
-
-PREDICTION_TRACKER_ADDRESS=0x...  # Optional, for on-chain prediction tracking
-PRIVATE_KEY=your-private-key  # Optional, required for automated transactions (on-chain recording/staking)
-BLOCKCHAIN_PRIVATE_KEY=your-private-key  # Alternative name (also accepts PRIVATE_KEY)
-
-# AI Configuration
-OPENAI_MODEL=gpt-3.5-turbo  # or gpt-4-turbo for better results
+```bash
+cp .env.example .env
 ```
+
+Then edit `.env` and fill in the required values:
+- `OPENAI_API_KEY` - Your OpenAI API key (required for AI features)
+- `BLOCKCHAIN_CONTRACT_ADDRESS` - Contract address (see deployed addresses below)
+- `BLOCKCHAIN_NETWORK` - Set to `testnet` or `mainnet`
+
+**Deployed Contract Addresses:**
+- **Mainnet:** `0x958dD10DfbF21e8F3c11BC8C005aa879144bBe0D` ([BSCScan](https://bscscan.com/address/0x958dD10DfbF21e8F3c11BC8C005aa879144bBe0D))
+- **Testnet:** `0xbB0383E1CE84C278a149AAb84F3aC7DE6687d2d6` ([BSCScan Testnet](https://testnet.bscscan.com/address/0xbB0383E1CE84C278a149AAb84F3aC7DE6687d2d6))
+
+**Note:** The live deployment at [theseery.com](https://theseery.com) uses BNB Smart Chain Testnet.
 
 **3. Deploy Smart Contract:**
 
@@ -82,6 +74,16 @@ Optional variables:
 - `PREDICTION_TRACKER_ADDRESS` - PredictionTracker contract address (for on-chain prediction tracking)
 - `PRIVATE_KEY` or `BLOCKCHAIN_PRIVATE_KEY` - For automated transactions (required for on-chain prediction recording)
 - `OPENAI_MODEL` - OpenAI model to use (default: gpt-3.5-turbo)
+
+## Backend API
+
+- **Express.js** server with RESTful API endpoints
+- **OpenAI** integration for price predictions (paid)
+- **BNB Chain** integration using ethers.js
+- **Oracle Integration**: Chainlink and Pyth Network for price verification
+- **Auto-Resolution**: Automated cron job for resolving expired stakes
+- **CoinGecko** API for real-time crypto prices
+- **TheNewsAPI** for crypto news aggregation (paid)
 
 ## API Endpoints
 

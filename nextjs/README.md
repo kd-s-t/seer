@@ -11,10 +11,17 @@ npm install
 
 **2. Set up environment variables:**
 
-Create a `.env.local` file in the `nextjs/` folder:
+Create a `.env.local` file in the `nextjs/` folder (see `.env.example` for template):
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3016
+NEXT_PUBLIC_MAIN_CONTRACT_ADDRESS=0x958dD10DfbF21e8F3c11BC8C005aa879144bBe0D
 ```
+
+**Deployed Contract Addresses:**
+- **Mainnet:** `0x958dD10DfbF21e8F3c11BC8C005aa879144bBe0D` ([BSCScan](https://bscscan.com/address/0x958dD10DfbF21e8F3c11BC8C005aa879144bBe0D))
+- **Testnet:** `0xbB0383E1CE84C278a149AAb84F3aC7DE6687d2d6` ([BSCScan Testnet](https://testnet.bscscan.com/address/0xbB0383E1CE84C278a149AAb84F3aC7DE6687d2d6))
+
+**Note:** The live deployment at [theseery.com](https://theseery.com) uses BNB Smart Chain Testnet.
 
 **3. Ensure backend is running:**
 
@@ -38,6 +45,7 @@ npm start
 ## Environment Variables
 
 - `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:3016)
+- `NEXT_PUBLIC_MAIN_CONTRACT_ADDRESS` - Main contract address on BNB Chain
 
 ## Features
 

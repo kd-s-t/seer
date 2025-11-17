@@ -8,7 +8,9 @@
 	<img src="./seerylogov3.png" width="200px" alt="Seery Logo" />
 </div>
 
-**Seery** is a decentralized crypto price prediction platform on BNB Chain that uses AI to generate price predictions for cryptocurrencies. Users can stake BNB on whether prices will go up or down within a 24-hour period. All staking data, predictions, and payouts are stored on-chain. The platform features a modern web interface with real-time market data, news integration, oracle-based price verification, automatic stake resolution, and comprehensive user analytics.
+**Seery** is a decentralized crypto prediction platform that combines AI-powered forecasts with on-chain staking to make market participation simple, transparent, and rewarding. Users can stake BNB on whether a cryptocurrency’s price will rise or fall within 24 hours, with all stakes and payouts recorded directly on the BNB Chain. The platform solves the problem of opaque prediction systems by using verifiable on-chain transactions and hybrid oracle feeds from Chainlink and Pyth for accurate, automated market resolution. Seery targets crypto traders, beginners seeking guided insights, and DeFi users who want transparent, trustless prediction markets enhanced by AI-driven analysis.
+
+
 
 **Features:**
 
@@ -91,6 +93,30 @@ seer/
     └── package.json
 ```
 
+## Quick Use
+
+The live deployment at [theseery.com](https://theseery.com) uses **BNB Smart Chain Testnet** for all on-chain transactions.
+
+**BNB Smart Chain Testnet RPC:**
+- RPC URL: `https://data-seed-prebsc-1-s1.binance.org:8545`
+- Chain ID: `97` (0x61 in hexadecimal)
+- Block Explorer: [BSCScan Testnet](https://testnet.bscscan.com)
+
+**To connect MetaMask:**
+1. Open MetaMask and click the network dropdown
+2. Select "Add Network" or "Add a network manually"
+3. Enter the following details:
+   - **Network Name:** BNB Smart Chain Testnet
+   - **New RPC URL:** `https://data-seed-prebsc-1-s1.binance.org:8545`
+   - **Chain ID:** `97`
+   - **Currency Symbol:** `tBNB`
+   - **Block Explorer URL:** `https://testnet.bscscan.com`
+4. Click "Save" and switch to the testnet network
+
+**Get Testnet BNB (tBNB):**
+- [BNB Smart Chain Testnet Faucet](https://testnet.binance.org/faucet-smart) - Official Binance testnet faucet
+- You'll need testnet BNB to pay for gas fees when staking on predictions
+
 ## Quick Start
 
 ### Prerequisites
@@ -102,10 +128,14 @@ seer/
 
 ### Installation
 
+**⚠️ Warning:** This project requires API keys for full functionality. Without the required API keys, some features may not work:
+- **OpenAI API Key** - Required for AI-powered predictions and market generation
+- **TheNewsAPI Key** - Required for crypto news aggregation (optional, can be disabled)
+
 **1. Clone the repository:**
 ```bash
-git clone https://github.com/kd-s-t/seer.git
-cd seer
+git clone https://github.com/kd-s-t/seery.git
+cd seery
 ```
 
 **2. Set up and start services:**
@@ -114,57 +144,63 @@ cd seer
 - **Frontend**: See [nextjs/README.md](nextjs/README.md) for detailed setup instructions
 - **Smart Contracts**: See [bnb/README.md](bnb/README.md) for deployment instructions
 
-## Docker
-
-Run the entire stack with Docker:
-
-```bash
-docker-compose up
-```
-
-This starts both frontend and backend services.
-
 ---  
 
-## Usage
+## Walkthrough
 
-### Viewing News
+### Getting Started
 
-1. Navigate to the **News** page
-2. Browse crypto news articles from TheNewsAPI
-3. News is automatically filtered for cryptocurrency-related content
+1. Visit the homepage at [theseery.com](https://theseery.com)
+2. Connect your MetaMask wallet (must be on BNB Smart Chain Testnet)
+3. You'll be automatically redirected to the **Market** page after connecting
 
 ### Market Predictions
 
-1. Connect your MetaMask wallet (BNB Chain testnet or mainnet)
-2. Navigate to the **Market** page
-3. View real-time cryptocurrency prices and AI-generated predictions
-4. Click the refresh button to generate new AI predictions
-5. Each prediction shows:
-   - Current price vs predicted price
-   - Direction (up/down) and percentage change
-   - Expiration time
-   - Total stakes for up/down directions
+1. On the **Market** page, view real-time cryptocurrency prices in a table format
+2. Each crypto shows:
+   - Current price
+   - AI-generated prediction (direction and percentage change)
+   - Suggested action (Up/Down with percentage)
+3. Click the **Refresh** button to generate new AI predictions for all cryptocurrencies
+4. Click the **Stake** button on any crypto to stake on that prediction
+5. In the stake modal:
+   - Choose direction (Up or Down)
+   - Enter stake amount (minimum 0.00001 BNB)
+   - Confirm transaction in MetaMask
+6. The prediction is automatically created on-chain if it doesn't exist, and your stake is recorded
 
-### Staking on Predictions
+### Staking Page
 
-1. Navigate to the **Staking** page
-2. Browse available stakeable predictions
-3. Select a prediction and click "Stake"
-4. Choose direction (Up or Down)
-5. Enter stake amount (minimum 0.00001 BNB)
-6. Confirm transaction in MetaMask
-7. Your stake is recorded on-chain
+1. Navigate to the **Staking** page from the header
+2. Browse all available stakeable predictions
+3. Each prediction card shows:
+   - Crypto name and current vs predicted price
+   - Direction and percentage change
+   - Total stakes for Up and Down pools
+   - Time remaining until expiration
+   - Your personal stake amounts (if you've staked)
+4. Click on a prediction card to select it, then click **Stake** or **Stake More**
+5. Choose direction and amount, then confirm in MetaMask
+6. View **Claimable Rewards** section for expired predictions that have been resolved
+
+### Viewing News
+
+1. Navigate to the **News** page from the header
+2. Browse trending crypto news articles
+3. Click on any article to read the full story (opens in new tab)
+4. Use the refresh button to get the latest news
 
 ### Viewing Profile
 
 1. Navigate to the **Profile** page (requires wallet connection)
 2. View your statistics:
-   - Wins and losses
-   - Net profit/loss
-   - Win rate percentage
-   - Total staked amount
-3. View detailed history of all your stakes
+   - **Win/Loss Record**: Wins, losses, and win rate percentage
+   - **Financial Summary**: Total staked, total won, total lost, and net profit/loss
+3. View detailed **My Stakes** table showing:
+   - All your stakes with crypto, direction, amount
+   - Predicted price and percentage change
+   - Status (Won/Lost/Pending)
+   - Creation date and resolution result
 
 ### Admin Analytics
 
@@ -180,57 +216,34 @@ This starts both frontend and backend services.
 
 ---  
 
-## Implementation Details
-
 ### Smart Contracts
 
 - **Stakes.sol**: Handles on-chain staking for crypto price predictions
 - **main.sol**: Main contract for prediction management
 - **Library.sol**: Shared library functions
 
-**Deployed Contract Address (BNB Testnet):**
+**Deployed Contract Addresses:**
+
+**BNB Smart Chain Mainnet:**
+- `0x958dD10DfbF21e8F3c11BC8C005aa879144bBe0D`
+- [View on BSCScan](https://bscscan.com/address/0x958dD10DfbF21e8F3c11BC8C005aa879144bBe0D)
+
+**BNB Smart Chain Testnet:**
 - `0xbB0383E1CE84C278a149AAb84F3aC7DE6687d2d6`
-
-### Frontend Architecture
-
-The Next.js frontend is organized into modular components:
-
-- **modules/news**: News feed with crypto news aggregation
-- **modules/market**: Market page with crypto prices and AI predictions
-- **modules/staking**: Staking interface for predictions
-- **modules/profile**: User profile with statistics and stake history
-- **modules/analytics**: Admin dashboard with platform metrics
-
-Each module follows a consistent structure:
-- `components/`: React components
-- `types.ts`: TypeScript interfaces
-- `const.ts`: Constants
-- `hooks.ts`: Custom React hooks
-- `utils.ts`: Utility functions
-- `index.ts`: Public exports
-
-### Backend API
-
-- **Express.js** server with RESTful API endpoints
-- **OpenAI** integration for price predictions (paid)
-- **BNB Chain** integration using ethers.js
-- **Oracle Integration**: Chainlink and Pyth Network for price verification
-- **Auto-Resolution**: Automated cron job for resolving expired stakes
-- **CoinGecko** API for real-time crypto prices
-- **TheNewsAPI** for crypto news aggregation (paid)
-
-### On-Chain Storage
-
-All staking data is stored on BNB Chain:
-- User stakes (amount, direction, prediction ID)
-- Prediction data (crypto ID, current price, predicted price, expiration)
-- Staker information (wallet address, stake amounts, timestamps)
-- Resolution status and rewards
-
-**Built for Seedify Predictions Market Hackathon**
+- [View on BSCScan Testnet](https://testnet.bscscan.com/address/0xbB0383E1CE84C278a149AAb84F3aC7DE6687d2d6)
 
 ## Team
 
-- [@kenn](https://www.linkedin.com/in/kdst/)
-- [@don](https://www.linkedin.com/in/carl-john-don-sebial-882430187/)
-- [@peter](https://www.linkedin.com/in/petertibon/)
+The team behind Seery combines deep expertise in full-stack engineering, product design, and blockchain development.
+
+**Don Sebial** - Product Designer  
+A designer driven by clarity, curiosity, and a deep interest in human behavior. Don crafts experiences that feel natural, grounded in strategy, and shaped through disciplined creativity.  
+[@don](https://www.linkedin.com/in/carl-john-don-sebial-882430187/)
+
+**Peter Tibon** - Full-Stack Engineer  
+A full-stack engineer with a decade of experience building scalable, high-performance applications across modern web stacks, from React and Next.js to Node, Python, and blockchain. Focused on clean architecture, testing discipline, and delivering reliable, intuitive solutions.  
+[@peter](https://www.linkedin.com/in/petertibon/)
+
+**Ken Dan Tinio** - Full-Stack Engineer & DevOps Specialist  
+With nearly a decade of experience across web applications, IoT, AI, and blockchain, Ken builds and maintains end-to-end systems while managing deployments, server infrastructure, and CI/CD pipelines for reliable operations. He excels at integrating complex APIs, leading development efforts, and solving problems rapidly, including competing in multiple hackathons.  
+[@kenn](https://www.linkedin.com/in/kdst/)
