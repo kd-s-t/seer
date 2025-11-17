@@ -616,14 +616,12 @@ export default function CryptoTable() {
   }
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <Box sx={{ flex: 1, minWidth: 300 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mt: 4, mb: 2 }}>
-            Market
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap', mt: 4 }}>
+        <Typography variant="h4" fontWeight="bold" sx={{ minWidth: 'fit-content' }}>
+          Market Predictions
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
           <Autocomplete
             size='small'
             multiple
@@ -658,31 +656,30 @@ export default function CryptoTable() {
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(10px)',
-                    color: 'white',
+                    bgcolor: 'background.paper',
+                    color: 'text.primary',
                     borderRadius: '8px',
                     '& fieldset': {
-                      borderColor: 'rgba(255, 255, 255, 0.5)',
+                      borderColor: 'divider',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'rgba(255, 255, 255, 0.7)',
+                      borderColor: 'primary.main',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: 'rgba(255, 255, 255, 0.9)',
+                      borderColor: 'primary.main',
                     },
                   },
                   '& .MuiInputLabel-root': {
-                    color: 'rgba(255, 255, 255, 0.9)',
+                    color: 'text.secondary',
                     '&.MuiInputLabel-shrink': {
-                      color: 'rgba(255, 255, 255, 1)',
+                      color: 'text.primary',
                       transform: 'translate(14px, -9px) scale(0.75)',
                     },
                   },
                   '& .MuiInputBase-input': {
-                    color: 'white',
+                    color: 'text.primary',
                     '&::placeholder': {
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: 'text.secondary',
                       opacity: 1,
                     },
                   },
@@ -746,12 +743,12 @@ export default function CryptoTable() {
                       />
                     ) : undefined}
                     sx={{
-                      bgcolor: 'rgba(255, 255, 255, 0.3)',
-                      color: 'white',
+                      bgcolor: 'primary.light',
+                      color: 'primary.contrastText',
                       '& .MuiChip-deleteIcon': {
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: 'text.secondary',
                         '&:hover': {
-                          color: 'white',
+                          color: 'text.primary',
                         },
                       },
                     }}
@@ -760,26 +757,27 @@ export default function CryptoTable() {
               })
             }
             sx={{
-              maxWidth: 600,
+              flex: 1,
+              minWidth: 200,
+              maxWidth: 'none',
               '& .MuiAutocomplete-inputRoot': {
-                color: 'white',
+                color: 'text.primary',
               },
               '& .MuiAutocomplete-popupIndicator': {
-                color: 'rgba(255, 255, 255, 0.9)',
+                color: 'text.secondary',
               },
               '& .MuiAutocomplete-clearIndicator': {
-                color: 'rgba(255, 255, 255, 0.9)',
+                color: 'text.secondary',
               },
               '& .MuiAutocomplete-listbox': {
-                bgcolor: 'rgba(102, 126, 234, 0.98)',
-                backdropFilter: 'blur(10px)',
+                bgcolor: 'background.paper',
                 '& .MuiAutocomplete-option': {
-                  color: 'white',
+                  color: 'text.primary',
                   '&[aria-selected="true"]': {
-                    bgcolor: 'rgba(255, 255, 255, 0.3)',
+                    bgcolor: 'action.selected',
                   },
                   '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                    bgcolor: 'action.hover',
                   },
                 },
               },
@@ -792,22 +790,22 @@ export default function CryptoTable() {
             onClick={handleRefresh}
             disabled={isRefreshing || loading || isRefreshCooldown()}
             sx={{
-              color: 'white',
-              borderColor: 'rgba(255, 255, 255, 0.7)',
+              color: 'text.primary',
+              borderColor: 'divider',
               '&:hover': {
-                borderColor: 'rgba(255, 255, 255, 0.9)',
-                bgcolor: 'rgba(255, 255, 255, 0.2)'
+                borderColor: 'primary.main',
+                bgcolor: 'action.hover'
               },
               '&:disabled': {
-                borderColor: 'rgba(255, 255, 255, 0.3)',
-                color: 'rgba(255, 255, 255, 0.5)'
+                borderColor: 'divider',
+                color: 'text.disabled'
               }
             }}
           >
             Refresh
           </Button>
           {lastFetchTime && (
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.75rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
               Last updated: {formatLastFetchTimeUtil(lastFetchTime)}
               {(() => {
                 const cooldownMinutes = getCooldownRemaining()

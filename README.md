@@ -38,6 +38,7 @@
 - **Buy and Sell**: Direct cryptocurrency trading functionality within the platform
 - **Enhanced News Integration**: Multiple news APIs will be integrated to provide richer data feeds for OpenAI analysis, improving prediction accuracy and market context
 - **Domain Separation**: Separate domains for mainnet and testnet deployments (mainnet.theseery.com and testnet.theseery.com)
+- **Market Expansion**: Will venture into stocks, sports, esports, and other possible betting games
 
 ---  
 
@@ -308,13 +309,13 @@ Reward = Your Stake + (Your Stake / Total Winners' Stake) × Losers' Pool
 The team behind Seery combines deep expertise in full-stack engineering, product design, and blockchain development.
 
 **Don Sebial** - Product Designer  
-A designer driven by clarity, curiosity, and a deep interest in human behavior. Don crafts experiences that feel natural, grounded in strategy, and shaped through disciplined creativity.  
+Crafts experiences that feel natural and grounded in strategy. Driven by clarity, curiosity, and understanding how people actually use things.  
 [@don](https://www.linkedin.com/in/carl-john-don-sebial-882430187/)
 
 **Peter Tibon** - Full-Stack Engineer  
-A full-stack engineer with a decade of experience building scalable, high-performance applications across modern web stacks, from React and Next.js to Node, Python, and blockchain. Focused on clean architecture, testing discipline, and delivering reliable, intuitive solutions.  
+Full-stack engineer with ten years building apps across React, Next.js, Node, Python, and blockchain. Cares about clean code, testing, and making things that actually work.  
 [@peter](https://www.linkedin.com/in/petertibon/)
 
 **Ken Dan Tinio** - Full-Stack Engineer & DevOps Specialist  
-With nearly a decade of experience across web applications, IoT, AI, and blockchain, Ken builds and maintains end-to-end systems while managing deployments, server infrastructure, and CI/CD pipelines for reliable operations. He excels at integrating complex APIs, leading development efforts, and solving problems rapidly, including competing in multiple hackathons.  
+Has been building web apps, IoT systems, AI integrations, and blockchain projects for almost ten years. Handles everything from writing code to deploying services and keeping infrastructure running. Good at connecting different APIs, shipping features fast, and figuring things out under pressure—especially during hackathons.  
 [@kenn](https://www.linkedin.com/in/kdst/)

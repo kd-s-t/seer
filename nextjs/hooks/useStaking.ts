@@ -478,45 +478,12 @@ export function useStakeablePredictions() {
                 }
               })
             } else {
-              // No stakers found - try fallback to getTotalStakedOnStake for totals only
-              try {
-                const totals = await publicClient.readContract({
-                  address: predictionStakingAddress as `0x${string}`,
-                  abi: PREDICTION_STAKING_ABI,
-                  functionName: 'getTotalStakedOnStake',
-                  args: [BigInt(stakeId)]
-                }) as unknown as [bigint, bigint]
-                
-                if (totals && Array.isArray(totals) && totals.length >= 2) {
-                  totalStakedUp = totals[0].toString()
-                  totalStakedDown = totals[1].toString()
-                  console.log(`Used getTotalStakedOnStake fallback for stake ${stakeId}: up=${totalStakedUp}, down=${totalStakedDown}`)
-                }
-              } catch (fallbackErr: any) {
-                console.warn(`Fallback getTotalStakedOnStake also failed for stake ${stakeId}:`, fallbackErr.message)
-              }
+              // No stakers found - this is normal for new stakes
+              console.log(`No stakers found for stake ${stakeId} (cryptoId: ${cryptoId})`)
             }
           } catch (err: any) {
             console.error(`Failed to get stakers for stake ${stakeId} (cryptoId: ${cryptoId}):`, err.message || err)
-            
-            // Fallback: Try getTotalStakedOnStake if getStakersByStake fails
-            try {
-              const totals = await publicClient.readContract({
-                address: predictionStakingAddress as `0x${string}`,
-                abi: PREDICTION_STAKING_ABI,
-                functionName: 'getTotalStakedOnStake',
-                args: [BigInt(stakeId)]
-              }) as unknown as [bigint, bigint]
-              
-              if (totals && Array.isArray(totals) && totals.length >= 2) {
-                totalStakedUp = totals[0].toString()
-                totalStakedDown = totals[1].toString()
-                console.log(`Used getTotalStakedOnStake fallback after error for stake ${stakeId}: up=${totalStakedUp}, down=${totalStakedDown}`)
-              }
-            } catch (fallbackErr: any) {
-              console.error(`Both getStakersByStake and getTotalStakedOnStake failed for stake ${stakeId}:`, fallbackErr.message)
-              // Continue with zero values - stake might be new or contract call failed
-            }
+            // Continue with zero values - stake might be new or contract call failed
           }
           
           // Create a separate prediction entry for each stake

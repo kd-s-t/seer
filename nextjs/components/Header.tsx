@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { AppBar, Toolbar, Typography, Button, Chip, Stack, Alert, Box, ToggleButtonGroup, ToggleButton, Menu, MenuItem, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material'
-import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance, ContentCopy, QrCode, CheckCircle, Close, Assessment } from '@mui/icons-material'
+import { AccountBalanceWallet, SwapHoriz, Logout, TrendingUp, Article, AccountBalance, ContentCopy, QrCode, CheckCircle, Close, Assessment, SportsEsports, Newspaper } from '@mui/icons-material'
 import { useBalance, usePublicClient } from 'wagmi'
 import { useNetwork } from '@/hooks/useNetwork'
 import { localhost } from '@/lib/wagmi'
@@ -255,7 +255,7 @@ export default function Header({
             <Button
               variant={isNewsActive ? "contained" : "text"}
               size="small"
-              startIcon={<Article />}
+              startIcon={<Newspaper />}
               onClick={handleNewsClick}
               sx={{
                 minWidth: { xs: 80, sm: 100 },
@@ -314,12 +314,12 @@ export default function Header({
                     })
                   }}
                 >
-                  Market
+                  Market Predictions
                 </Button>
                 <Button
                   variant={isStakingActive ? "contained" : "text"}
                   size="small"
-                  startIcon={<AccountBalance />}
+                  startIcon={<SportsEsports />}
                   onClick={handleStakingClick}
                   sx={{
                     minWidth: { xs: 80, sm: 100 },
