@@ -98,7 +98,8 @@ export function useStaking() {
     percentChange: number,
     amountInBNB: string,
     stakeUp: boolean,
-    libraryId?: string | number | null
+    libraryId?: string | number | null,
+    existingStakeId?: string | number | null
   ) => {
     if (!predictionStakingAddress) {
       throw new Error('PredictionStaking contract address not configured')
@@ -172,6 +173,7 @@ export function useStaking() {
         valueType: typeof parsedAmount,
         valueHex: parsedAmount.toString(16),
         amountInBNB,
+        existingStakeId,
         'CHECK': parsedAmount.toString() === '3000000000000000000' ? '✅ Correct (3 BNB)' : `❌ WRONG! Expected 3000000000000000000, got ${parsedAmount.toString()}`
       })
       
@@ -185,21 +187,40 @@ export function useStaking() {
         type: typeof transactionValue
       })
       
-      writeContract({
-        address: predictionStakingAddress as `0x${string}`,
-        abi: PREDICTION_STAKING_ABI,
-        functionName: 'createStake',
-        args: [
-          cryptoId,
-          currentPriceWei,
-          predictedPriceWei,
-          direction,
-          percentChangeScaled,
-          stakeUp,
-          libraryIdBigInt // libraryId: 0 means not linked to a library entry, otherwise links to library
-        ],
-        value: transactionValue
-      })
+      // If existingStakeId is provided, join the existing stake instead of creating a new one
+      if (existingStakeId) {
+        const stakeIdBigInt = BigInt(existingStakeId)
+        console.log('Joining existing stake:', stakeIdBigInt.toString())
+        
+        writeContract({
+          address: predictionStakingAddress as `0x${string}`,
+          abi: PREDICTION_STAKING_ABI,
+          functionName: 'stakeOnIt',
+          args: [
+            stakeIdBigInt,
+            stakeUp
+          ],
+          value: transactionValue
+        })
+      } else {
+        console.log('Creating new stake')
+        
+        writeContract({
+          address: predictionStakingAddress as `0x${string}`,
+          abi: PREDICTION_STAKING_ABI,
+          functionName: 'createStake',
+          args: [
+            cryptoId,
+            currentPriceWei,
+            predictedPriceWei,
+            direction,
+            percentChangeScaled,
+            stakeUp,
+            libraryIdBigInt // libraryId: 0 means not linked to a library entry, otherwise links to library
+          ],
+          value: transactionValue
+        })
+      }
       
       // Wait for transaction hash to be set (wagmi is async)
       // Poll for up to 3 seconds to see if hash is set or error occurs
@@ -346,24 +367,15 @@ export function useStakeablePredictions() {
   const [error, setError] = useState<string | null>(null)
   const publicClient = usePublicClient()
   const { writeContract } = useWriteContract()
-  
+  const hasFetchedRef = useRef(false)
 
-  useEffect(() => {
-    let cancelled = false
-
-    if (!predictionStakingAddress || !publicClient) {
-      if (!cancelled) {
-        setLoading(false)
-        if (!predictionStakingAddress) {
-          setError('Contract address not configured')
-        }
+  const fetchPredictions = async (cancelledRef?: { current: boolean }) => {
+      if (!predictionStakingAddress || !publicClient) {
+        return
       }
-      return
-    }
 
-    const fetchPredictions = async () => {
       try {
-        if (!cancelled) {
+        if (!cancelledRef?.current) {
           setLoading(true)
           setError(null)
         }
@@ -398,14 +410,14 @@ export function useStakeablePredictions() {
           }
         }
         
-        if (cancelled) return
+        if (cancelledRef?.current) return
         
         const allStakes = stakesResponse?.stakes || []
         const totalStakes = stakesResponse?.totalStakes || BigInt(0)
         const totalAmountStaked = stakesResponse?.totalAmountStaked || BigInt(0)
         
         if (!allStakes || allStakes.length === 0) {
-          if (!cancelled) {
+          if (!cancelledRef?.current) {
             setPredictions([])
             setLoading(false)
           }
@@ -418,7 +430,7 @@ export function useStakeablePredictions() {
         const predictionsData: any[] = []
         
         for (let i = 0; i < allStakes.length; i++) {
-          if (cancelled) return
+          if (cancelledRef?.current) return
           
           const stake = allStakes[i]
           const stakeId = i + 1 // Stake IDs start at 1
@@ -438,7 +450,7 @@ export function useStakeablePredictions() {
               args: [BigInt(stakeId)]
             })
             
-            if (cancelled) return
+            if (cancelledRef?.current) return
             
             if (stakers && Array.isArray(stakers)) {
               stakers.forEach((staker: any) => {
@@ -485,7 +497,7 @@ export function useStakeablePredictions() {
           })
         }
         
-        if (cancelled) return
+        if (cancelledRef?.current) return
         
         // Sort by creation date descending (newest first)
         predictionsData.sort((a, b) => {
@@ -494,157 +506,56 @@ export function useStakeablePredictions() {
           return bTimestamp - aTimestamp
         })
 
-        if (!cancelled) {
+        if (!cancelledRef?.current) {
           setPredictions(predictionsData)
           if (predictionsData.length === 0) {
             setError('No active predictions available.')
           }
         }
       } catch (err: any) {
-        if (!cancelled) {
+        if (!cancelledRef?.current) {
           setError(err.message || 'Failed to load predictions')
           setPredictions([])
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelledRef?.current) {
           setLoading(false)
         }
       }
     }
 
-    fetchPredictions()
+  // Initial fetch - only once when dependencies are ready
+  useEffect(() => {
+    const cancelledRef = { current: false }
+
+    if (!predictionStakingAddress || !publicClient) {
+      setLoading(false)
+      if (!predictionStakingAddress) {
+        setError('Contract address not configured')
+      }
+      return
+    }
+
+    // Only fetch once on initial load
+    if (hasFetchedRef.current) {
+      return
+    }
+
+    hasFetchedRef.current = true
+    fetchPredictions(cancelledRef)
     
     return () => {
-      cancelled = true
+      cancelledRef.current = true
     }
-  }, [predictionStakingAddress, publicClient, userAddress])
+  }, [predictionStakingAddress, publicClient]) // Removed userAddress from dependencies - only fetch once on load
 
-  const refetch = () => {
-    if (!predictionStakingAddress || !publicClient) return
+  const refetch = async () => {
+    if (!predictionStakingAddress || !publicClient) {
+      return Promise.resolve()
+    }
     
-    setLoading(true)
-    const fetchPredictions = async () => {
-      try {
-        setError(null)
-        
-        // Get all stakes from backend API
-        const apiData = await getStakeablePredictions()
-        console.log('Response: getStakes API', apiData)
-        
-        let stakesResponse
-        if (!apiData.success || !apiData.predictions) {
-          stakesResponse = { stakes: [], totalStakes: BigInt(0), totalAmountStaked: BigInt(0) }
-        } else {
-          stakesResponse = {
-            stakes: apiData.predictions.map((stake: any) => ({
-              createdBy: stake.createdBy,
-              createdAt: BigInt(stake.createdAt),
-              expiresAt: BigInt(stake.expiresAt),
-              libraryId: BigInt(stake.libraryId || 0),
-              rewarded: stake.rewarded,
-              predictionCorrect: stake.predictionCorrect || false,
-              stakeUp: stake.stakeUp,
-              cryptoId: stake.cryptoId,
-              currentPrice: BigInt(stake.currentPrice),
-              predictedPrice: BigInt(stake.predictedPrice),
-              actualPrice: BigInt(stake.actualPrice || 0),
-              direction: stake.direction,
-              percentChange: BigInt(stake.percentChange)
-            })),
-            totalStakes: BigInt(apiData.totalStakes || 0),
-            totalAmountStaked: BigInt(apiData.totalAmountStaked || 0)
-          }
-        }
-        
-        const allStakes = stakesResponse?.stakes || []
-        if (!allStakes || allStakes.length === 0) {
-          setPredictions([])
-          setLoading(false)
-          return
-        }
-
-        // Process each stake separately instead of grouping by cryptoId
-        const predictionsData: any[] = []
-        
-        for (let i = 0; i < allStakes.length; i++) {
-          const stake = allStakes[i]
-          const stakeId = i + 1 // Stake IDs start at 1
-          const cryptoId = stake.cryptoId
-          
-          let totalStakedUp = '0'
-          let totalStakedDown = '0'
-          let userStakeUp = '0'
-          let userStakeDown = '0'
-          
-          // Get stakers for this stake to calculate totals and user stakes
-          try {
-            const stakers = await publicClient.readContract({
-              address: predictionStakingAddress as `0x${string}`,
-              abi: PREDICTION_STAKING_ABI,
-              functionName: 'getStakersByStake',
-              args: [BigInt(stakeId)]
-            })
-            
-            if (stakers && Array.isArray(stakers)) {
-              stakers.forEach((staker: any) => {
-                // Calculate totals
-                if (staker.stakeUp) {
-                  totalStakedUp = (BigInt(totalStakedUp) + BigInt(staker.amountInBNB)).toString()
-                } else {
-                  totalStakedDown = (BigInt(totalStakedDown) + BigInt(staker.amountInBNB)).toString()
-                }
-                
-                // Track user stakes if user is connected
-                if (userAddress && staker.wallet.toLowerCase() === userAddress.toLowerCase()) {
-                  if (staker.stakeUp) {
-                    userStakeUp = (BigInt(userStakeUp) + BigInt(staker.amountInBNB)).toString()
-                  } else {
-                    userStakeDown = (BigInt(userStakeDown) + BigInt(staker.amountInBNB)).toString()
-                  }
-                }
-              })
-            }
-          } catch (err) {
-          }
-          
-          // Create a separate prediction entry for each stake
-          predictionsData.push({
-            predictionId: `${cryptoId}-${stakeId}`, // Use cryptoId-stakeId as unique identifier
-            stakeId: stakeId.toString(),
-            cryptoId: cryptoId,
-            currentPrice: formatEther(BigInt(stake.currentPrice || '0')),
-            predictedPrice: formatEther(BigInt(stake.predictedPrice || '0')),
-            actualPrice: stake.actualPrice ? formatEther(BigInt(stake.actualPrice)) : '0',
-            rewarded: stake.rewarded || false,
-            predictionCorrect: stake.predictionCorrect || false,
-            timestamp: stake.createdAt.toString(),
-            verified: false,
-            accuracy: '0',
-            direction: stake.direction,
-            percentChange: (Number(stake.percentChange) / 100).toString(),
-            expiresAt: stake.expiresAt.toString(),
-            totalStakedUp: formatEther(BigInt(totalStakedUp || '0')),
-            totalStakedDown: formatEther(BigInt(totalStakedDown || '0')),
-            userStakeUp: formatEther(BigInt(userStakeUp || '0')),
-            userStakeDown: formatEther(BigInt(userStakeDown || '0'))
-          })
-        }
-
-        // Sort by creation date descending (newest first)
-        predictionsData.sort((a, b) => {
-          const aTimestamp = parseInt(a.timestamp || '0')
-          const bTimestamp = parseInt(b.timestamp || '0')
-          return bTimestamp - aTimestamp
-        })
-
-        setPredictions(predictionsData)
-        setLoading(false)
-      } catch (err: any) {
-        setError(err.message || 'Failed to refetch predictions')
-        setLoading(false)
-      }
-    }
-    fetchPredictions()
+    // Manual refetch - no cancellation needed, just call fetchPredictions
+    await fetchPredictions()
   }
 
   return { predictions, loading, error, refetch }
@@ -653,4 +564,5 @@ export function useStakeablePredictions() {
 export function useUserStakes(address: string | undefined) {
   return { stakes: [], loading: false, error: null }
 }
+
 

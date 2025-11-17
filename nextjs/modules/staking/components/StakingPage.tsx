@@ -70,7 +70,7 @@ export default function StakingPage() {
       if (selectedPrediction) {
         setSnackbar({
           open: true,
-          message: 'Transaction confirmed!',
+          message: 'Transaction confirmed! Refreshing predictions...',
           severity: 'success'
         })
         setStakeModalOpen(false)
@@ -79,9 +79,41 @@ export default function StakingPage() {
         setStakeAmount('0.01')
         setStakeDirection('up')
         
-        setTimeout(async () => {
-          refetchPredictions()
-        }, 3000)
+        // Refetch with retries to ensure blockchain state is updated
+        const refetchWithRetries = async (attempt = 1, maxAttempts = 3) => {
+          const delays = [2000, 5000, 10000] // Increasing delays: 2s, 5s, 10s
+          const delay = delays[Math.min(attempt - 1, delays.length - 1)]
+          
+          await new Promise(resolve => setTimeout(resolve, delay))
+          
+          try {
+            console.log(`Refetching predictions (attempt ${attempt}/${maxAttempts})...`)
+            await refetchPredictions()
+            console.log(`Successfully refetched predictions on attempt ${attempt}`)
+            
+            if (attempt === maxAttempts) {
+              setSnackbar({
+                open: true,
+                message: 'Predictions updated!',
+                severity: 'success'
+              })
+            }
+          } catch (error) {
+            console.error(`Refetch attempt ${attempt} failed:`, error)
+            if (attempt < maxAttempts) {
+              // Retry with next delay
+              refetchWithRetries(attempt + 1, maxAttempts)
+            } else {
+              setSnackbar({
+                open: true,
+                message: 'Predictions may take a moment to update. Please refresh the page if needed.',
+                severity: 'success'
+              })
+            }
+          }
+        }
+        
+        refetchWithRetries()
       }
     }
   }, [isConfirmed, receipt, selectedPrediction, address, predictionStakingAddress, refetchPredictions])
@@ -178,7 +210,8 @@ export default function StakingPage() {
         percentChange,
         stakeAmount,
         stakeDirection === 'up',
-        selectedPrediction.libraryId || null
+        selectedPrediction.libraryId || null,
+        selectedPrediction.stakeId || null // Pass stakeId if it exists (for joining existing stake)
       )
     } catch (error: any) {
       const errorMsg = error?.message || error?.info?.error?.message || 'Failed to stake'

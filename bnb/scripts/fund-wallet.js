@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  const recipientAddress = '0xa347f85CC98E691C882a38dAD051C249a2Ad8a77';
+  const recipientAddress = '0x3adf9dac83a382bde820e1d15dbd0a57c4b034a6';
   
   console.log('Connecting to Hardhat node...');
   
@@ -31,8 +31,8 @@ async function main() {
     const beforeBalance = await provider.getBalance(recipientAddress);
     console.log('Recipient balance before:', hre.ethers.formatEther(beforeBalance), 'ETH');
     
-    const amount = hre.ethers.parseEther("300");
-    console.log('\nSending 300 BNB to:', recipientAddress);
+    const amount = hre.ethers.parseEther("10");
+    console.log('\nSending 10 BNB to:', recipientAddress);
     
     const tx = await sender.sendTransaction({
       to: recipientAddress,

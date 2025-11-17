@@ -229,6 +229,64 @@ cd seery
 
 ---  
 
+### Reward Distribution Scenarios
+
+Seery uses a **proportional reward system** where winners receive their original stake back plus a proportional share of the losers' pool.
+
+**Formula:**
+```
+Reward = Your Stake + (Your Stake / Total Winners' Stake) × Losers' Pool
+```
+
+#### Scenario 1: High Wins
+
+**Stakes:**
+- **High (Up):** 1 BNB (You) + 2 BNB (Person 2) + 5 BNB (Person 3) = **8 BNB total**
+- **Low (Down):** 3 BNB total
+- **Total Pool:** 11 BNB
+
+**If High Wins - Reward Distribution:**
+
+1. **You (1 BNB stake):**
+   - Reward = 1 + (1 / 8) × 3 = **1.375 BNB**
+   - Profit: **0.375 BNB** (37.5% return)
+
+2. **Person 2 (2 BNB stake):**
+   - Reward = 2 + (2 / 8) × 3 = **2.75 BNB**
+   - Profit: **0.75 BNB** (37.5% return)
+
+3. **Person 3 (5 BNB stake):**
+   - Reward = 5 + (5 / 8) × 3 = **6.875 BNB**
+   - Profit: **1.875 BNB** (37.5% return)
+
+**Result:** All 11 BNB distributed. Winners get 37.5% return on their stake.
+
+#### Scenario 2: Low Wins
+
+**Stakes:**
+- **High (Up):** 10 BNB total
+- **Low (Down):** 1 BNB (You) + 2 BNB (Person 2) = **3 BNB total**
+- **Total Pool:** 13 BNB
+
+**If Low Wins - Reward Distribution:**
+
+1. **You (1 BNB stake):**
+   - Reward = 1 + (1 / 3) × 10 = **4.33 BNB**
+   - Profit: **3.33 BNB** (333% return)
+
+2. **Person 2 (2 BNB stake):**
+   - Reward = 2 + (2 / 3) × 10 = **8.67 BNB**
+   - Profit: **6.67 BNB** (333% return)
+
+**Result:** All 13 BNB distributed. Winners get 333% return on their stake.
+
+#### Key Points:
+
+- **Proportional Distribution:** Larger stakes receive larger absolute rewards, but all winners get the same percentage return
+- **Zero-Sum:** All funds in the pool are distributed (winners' stakes + losers' stakes)
+- **Risk/Reward:** Smaller pools on the winning side result in higher returns for winners
+- **Fair System:** Your reward is proportional to your stake size relative to other winners
+
 ### Smart Contracts
 
 - **Stakes.sol**: Handles on-chain staking for crypto price predictions
