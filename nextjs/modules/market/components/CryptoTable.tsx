@@ -24,8 +24,9 @@ import {
   Link,
   Autocomplete,
   TextField,
+  InputAdornment,
 } from '@mui/material'
-import { Close, Refresh, AccountBalance } from '@mui/icons-material'
+import { Close, Refresh, AccountBalance, Search } from '@mui/icons-material'
 import { TrendingUp, TrendingDown, ArrowUpward, ArrowDownward } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { getCryptoPrices, type CryptoPrice, type NewsSource } from '@/lib/coingecko'
@@ -617,11 +618,25 @@ export default function CryptoTable() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap', mt: 4 }}>
-        <Typography variant="h4" fontWeight="bold" sx={{ minWidth: 'fit-content' }}>
-          Market Predictions
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap', mt: 4, justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Typography variant="h4" fontWeight="bold" sx={{ minWidth: 'fit-content' }}>
+            Market
+          </Typography>
+          {lastFetchTime && (
+            <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+              Last updated: {formatLastFetchTimeUtil(lastFetchTime)}
+              {(() => {
+                const cooldownMinutes = getCooldownRemaining()
+                if (cooldownMinutes !== null) {
+                  return ` (${cooldownMinutes}m cooldown)`
+                }
+                return ''
+              })()}
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, minWidth: 0 }}>
           <Autocomplete
             size='small'
             multiple
@@ -648,38 +663,37 @@ export default function CryptoTable() {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Search or select cryptocurrencies"
+                placeholder="Search"
                 variant="outlined"
-                InputLabelProps={{
-                  ...params.InputLabelProps,
-                  shrink: true,
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start" sx={{ mr: '2px' }}>
+                        <Search sx={{ color: 'rgba(0, 0, 0, 0.6)' }} />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: 'background.paper',
-                    color: 'text.primary',
+                    bgcolor: 'white',
                     borderRadius: '8px',
                     '& fieldset': {
-                      borderColor: 'divider',
+                      borderColor: 'rgba(0, 0, 0, 0.23)',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'primary.main',
+                      borderColor: 'rgba(0, 0, 0, 0.23)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    '&.MuiInputLabel-shrink': {
-                      color: 'text.primary',
-                      transform: 'translate(14px, -9px) scale(0.75)',
+                      borderColor: 'rgba(0, 0, 0, 0.23)',
                     },
                   },
                   '& .MuiInputBase-input': {
                     color: 'text.primary',
                     '&::placeholder': {
-                      color: 'text.secondary',
+                      color: 'rgba(0, 0, 0, 0.6)',
                       opacity: 1,
                     },
                   },
@@ -758,13 +772,13 @@ export default function CryptoTable() {
             }
             sx={{
               flex: 1,
-              minWidth: 200,
+              minWidth: 400,
               maxWidth: 'none',
               '& .MuiAutocomplete-inputRoot': {
                 color: 'text.primary',
               },
               '& .MuiAutocomplete-popupIndicator': {
-                color: 'text.secondary',
+                display: 'none',
               },
               '& .MuiAutocomplete-clearIndicator': {
                 color: 'text.secondary',
@@ -804,18 +818,6 @@ export default function CryptoTable() {
           >
             Refresh
           </Button>
-          {lastFetchTime && (
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-              Last updated: {formatLastFetchTimeUtil(lastFetchTime)}
-              {(() => {
-                const cooldownMinutes = getCooldownRemaining()
-                if (cooldownMinutes !== null) {
-                  return ` (${cooldownMinutes}m cooldown)`
-                }
-                return ''
-              })()}
-            </Typography>
-          )}
         </Box>
       </Box>
 
@@ -823,7 +825,8 @@ export default function CryptoTable() {
         component={Paper}
         sx={{
           bgcolor: '#ffffff',
-          overflowX: 'auto'
+          overflowX: 'auto',
+          borderRadius: '0.75rem',
         }}
       >
         <Table sx={{ minWidth: 650 }}>
@@ -970,7 +973,6 @@ export default function CryptoTable() {
                           <Box>
                             <Typography
                               variant="body2"
-                              color="text.secondary"
                               sx={{
                                 maxWidth: { xs: 150, sm: 250 },
                                 overflow: 'hidden',
@@ -1231,6 +1233,12 @@ export default function CryptoTable() {
             Cancel
           </Button>
           <Button
+            sx={{
+              bgcolor: '#7248d6',
+              '&:hover': {
+                bgcolor: '#5d3ab0'
+              }
+            }}
             variant="contained"
             onClick={async () => {
               // Clear previous errors when starting a new transaction attempt

@@ -221,7 +221,7 @@ export default function Header({
         position="static"
         sx={{
           background: '#fff',
-          borderRadius: '0.75rem',
+          borderRadius: '1.25rem',
           mb: 3
         }}
       >
@@ -314,7 +314,7 @@ export default function Header({
                     })
                   }}
                 >
-                  Market Predictions
+                  Market
                 </Button>
                 <Button
                   variant={isStakingActive ? "contained" : "text"}

@@ -40,7 +40,7 @@ export default function StakingPage() {
   const { address: wagmiAddress } = useAccount()
   const { predictions, loading: predictionsLoading, error: predictionsError, refetch: refetchPredictions } = useStakeablePredictions()
   const { stakeOnCrypto, isPending, isConfirming, isConfirmed, error: stakeError, receipt, hash } = useStaking()
-  
+
   const [selectedPrediction, setSelectedPrediction] = useState<any>(null)
   const [stakeModalOpen, setStakeModalOpen] = useState(false)
   const [stakeAmount, setStakeAmount] = useState('0.01')
@@ -66,7 +66,7 @@ export default function StakingPage() {
   useEffect(() => {
     if (isConfirmed || receipt) {
       console.log('Response: Stake transaction confirmed')
-      
+
       if (selectedPrediction) {
         setSnackbar({
           open: true,
@@ -78,19 +78,19 @@ export default function StakingPage() {
         setSelectedPrediction(null)
         setStakeAmount('0.01')
         setStakeDirection('up')
-        
+
         // Refetch with retries to ensure blockchain state is updated
         const refetchWithRetries = async (attempt = 1, maxAttempts = 3) => {
           const delays = [2000, 5000, 10000] // Increasing delays: 2s, 5s, 10s
           const delay = delays[Math.min(attempt - 1, delays.length - 1)]
-          
+
           await new Promise(resolve => setTimeout(resolve, delay))
-          
+
           try {
             console.log(`Refetching predictions (attempt ${attempt}/${maxAttempts})...`)
             await refetchPredictions()
             console.log(`Successfully refetched predictions on attempt ${attempt}`)
-            
+
             if (attempt === maxAttempts) {
               setSnackbar({
                 open: true,
@@ -112,7 +112,7 @@ export default function StakingPage() {
             }
           }
         }
-        
+
         refetchWithRetries()
       }
     }
@@ -130,7 +130,7 @@ export default function StakingPage() {
           })
         }
       }, 120000)
-      
+
       return () => clearTimeout(timeout)
     }
   }, [isPending, isConfirming])
@@ -166,11 +166,11 @@ export default function StakingPage() {
     const claimable = predictions.filter((prediction: any) => {
       const expiresAtNum = parseInt(prediction.expiresAt)
       const expiresAt = expiresAtNum > 1e12 ? expiresAtNum : expiresAtNum * 1000
-      const hasStake = parseFloat(prediction.userStakeUp || '0') > 0 || 
-                       parseFloat(prediction.userStakeDown || '0') > 0
+      const hasStake = parseFloat(prediction.userStakeUp || '0') > 0 ||
+        parseFloat(prediction.userStakeDown || '0') > 0
       const isExpired = expiresAt > 0 && expiresAt < now
       const isVerified = prediction.verified === true
-      
+
       return isVerified && isExpired && hasStake
     })
 
@@ -191,15 +191,15 @@ export default function StakingPage() {
 
   const handleStake = async () => {
     if (!selectedPrediction) return
-    
+
     if (!stakeAmount || parseFloat(stakeAmount) < 0.00001) {
       setStakeFieldError('Please enter a valid stake amount (minimum 0.00001 BNB)')
       return
     }
 
     setStakeFieldError(null)
-    
-    
+
+
     try {
       const percentChange = parseFloat(selectedPrediction.percentChange || '0')
       await stakeOnCrypto(
@@ -270,10 +270,10 @@ export default function StakingPage() {
     try {
       const currentPriceNum = parseFloat(currentPrice)
       const percentDecimal = parseFloat(percentChange) / 100 // percentChange is already a percentage, so divide by 100 to get decimal
-      
+
       // Calculate predicted price based on stored direction
       const calculatedPredicted = currentPriceNum * (storedDirection === 'up' ? (1 + percentDecimal) : (1 - percentDecimal))
-      
+
       // Direction is determined by whether calculated predicted price is higher or lower than current
       return calculatedPredicted > currentPriceNum ? 'up' : 'down'
     } catch {
@@ -287,12 +287,12 @@ export default function StakingPage() {
     const expiry = expiryNum > 1e12 ? expiryNum : expiryNum * 1000
     const now = Date.now()
     const diff = expiry - now
-    
+
     if (diff <= 0) return 'Expired'
-    
+
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    
+
     if (hours > 0) return `${hours}h ${minutes}m`
     return `${minutes}m`
   }
@@ -344,7 +344,7 @@ export default function StakingPage() {
             )}
 
             {!predictionsLoading && predictions.length === 0 && (
-              <Alert 
+              <Alert
                 severity="info"
                 action={
                   <Button
@@ -367,10 +367,10 @@ export default function StakingPage() {
                   sx={{
                     cursor: 'pointer',
                     border: selectedPrediction?.predictionId === prediction.predictionId ? 2 : 1,
-                    borderColor: selectedPrediction?.predictionId === prediction.predictionId 
-                      ? 'primary.main' 
-                      : prediction.rewarded 
-                        ? 'success.main' 
+                    borderColor: selectedPrediction?.predictionId === prediction.predictionId
+                      ? 'primary.main'
+                      : prediction.rewarded
+                        ? 'success.main'
                         : 'divider',
                     backgroundColor: prediction.rewarded ? 'action.hover' : '#ffffff',
                     bgcolor: prediction.rewarded ? 'action.hover' : '#ffffff',
@@ -381,7 +381,7 @@ export default function StakingPage() {
                       borderColor: prediction.rewarded ? 'success.dark' : 'primary.main'
                     }
                   }}
-                  style={{backgroundColor: 'white'}}
+                  style={{ backgroundColor: 'white' }}
                   onClick={() => setSelectedPrediction(prediction)}
                 >
                   <CardContent>
@@ -391,23 +391,23 @@ export default function StakingPage() {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             {(() => {
                               const imageUrl = getCryptoImageUrl(prediction.cryptoId)
-                                return (
-                                  <Box
-                                    component="img"
-                                    src={imageUrl}
-                                    alt={prediction.cryptoId}
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none'
-                                    }}
-                                    sx={{
-                                      width: 24,
-                                      height: 24,
-                                      borderRadius: '50%',
-                                      objectFit: 'cover',
-                                      flexShrink: 0
-                                    }}
-                                  />
-                                )
+                              return (
+                                <Box
+                                  component="img"
+                                  src={imageUrl}
+                                  alt={prediction.cryptoId}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                  }}
+                                  sx={{
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    flexShrink: 0
+                                  }}
+                                />
+                              )
                             })()}
                             <Typography variant="h6" fontWeight="bold">
                               {prediction.cryptoId}
@@ -506,6 +506,12 @@ export default function StakingPage() {
                           })()}
                         </Box>
                         <Button
+                          sx={{
+                            bgcolor: '#7248d6',
+                            '&:hover': {
+                              bgcolor: '#5d3ab0'
+                            }
+                          }}
                           variant="contained"
                           size="small"
                           disabled={prediction.rewarded || getTimeRemaining(prediction.expiresAt) === 'Expired'}
@@ -518,12 +524,12 @@ export default function StakingPage() {
                             setStakeFieldError(null);
                           }}
                         >
-                          {prediction.rewarded 
-                            ? 'Resolved' 
+                          {prediction.rewarded
+                            ? 'Resolved'
                             : getTimeRemaining(prediction.expiresAt) === 'Expired'
                               ? 'Expired'
-                              : parseFloat(prediction.userStakeUp || '0') > 0 || parseFloat(prediction.userStakeDown || '0') > 0 
-                                ? 'Stake More' 
+                              : parseFloat(prediction.userStakeUp || '0') > 0 || parseFloat(prediction.userStakeDown || '0') > 0
+                                ? 'Stake More'
                                 : 'Stake'}
                         </Button>
                       </Box>
@@ -570,10 +576,10 @@ export default function StakingPage() {
 
         </Grid>
 
-        <Dialog 
-          open={stakeModalOpen} 
-          onClose={() => setStakeModalOpen(false)} 
-          maxWidth="sm" 
+        <Dialog
+          open={stakeModalOpen}
+          onClose={() => setStakeModalOpen(false)}
+          maxWidth="sm"
           fullWidth
           disableEnforceFocus={false}
           disableAutoFocus={false}
@@ -583,23 +589,23 @@ export default function StakingPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {selectedPrediction && (() => {
                   const imageUrl = getCryptoImageUrl(selectedPrediction.cryptoId)
-                    return (
-                      <Box
-                        component="img"
-                        src={imageUrl}
-                        alt={selectedPrediction.cryptoId}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          flexShrink: 0
-                        }}
-                      />
-                    )
+                  return (
+                    <Box
+                      component="img"
+                      src={imageUrl}
+                      alt={selectedPrediction.cryptoId}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        flexShrink: 0
+                      }}
+                    />
+                  )
                 })()}
                 <Typography variant="h6">
                   {selectedPrediction ? `Stake on ${selectedPrediction.cryptoId}` : 'Stake on Prediction'}
@@ -616,10 +622,10 @@ export default function StakingPage() {
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     Current: ${parseFloat(selectedPrediction.currentPrice).toFixed(2)} → Predicted: ${calculatePredictedPrice(selectedPrediction.currentPrice, selectedPrediction.percentChange, selectedPrediction.direction)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
                     Prediction: {selectedPrediction.direction === 'up' ? '↑' : '↓'} {formatPercent(selectedPrediction.percentChange)}%
-                        </Typography>
+                  </Typography>
                 </Box>
                 {(parseFloat(selectedPrediction.userStakeUp || '0') > 0 || parseFloat(selectedPrediction.userStakeDown || '0') > 0) && (
                   <Alert severity="info">
@@ -668,12 +674,12 @@ export default function StakingPage() {
                   <Alert severity="success">
                     Stake placed successfully!
                   </Alert>
-            )}
+                )}
               </Stack>
             )}
           </DialogContent>
           <DialogActions>
-            <Button 
+            <Button
               onClick={() => {
                 setStakeModalOpen(false)
                 setStakeFieldError(null)
